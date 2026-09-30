@@ -1,0 +1,261 @@
+.checkout-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 5% 4rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #1e293b;
+}
+
+.checkout-page h1 {
+  font-size: 2rem;
+  color: #1a1b4b;
+  margin-bottom: 1.5rem;
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.checkout-form {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 18px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.checkout-form h3 {
+  margin: 0.5rem 0 0.3rem;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.checkout-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.checkout-form input,
+.checkout-form textarea {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.checkout-form input:focus,
+.checkout-form textarea:focus {
+  border-color: #00d1a0;
+}
+
+.error-campo {
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.metodo-envio-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.opcion-envio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: #334155;
+}
+
+.opcion-envio.seleccionada {
+  border-color: #00d1a0;
+  background: #e6faf5;
+  color: #00a881;
+}
+
+.aviso-pago {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a5b13;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.aviso-pago-form {
+  margin-top: 0.3rem;
+}
+
+.btn-confirmar-pedido {
+  margin-top: 0.5rem;
+  background: #00d1a0;
+  color: #0f172a;
+  border: none;
+  padding: 14px;
+  border-radius: 50px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-confirmar-pedido:hover {
+  background-color: #00b88d;
+}
+
+/* --- Resumen lateral --- */
+.checkout-resumen {
+  background: #f8fafc;
+  border-radius: 18px;
+  padding: 1.8rem;
+  position: sticky;
+  top: 1.5rem;
+}
+
+.checkout-resumen h3 {
+  margin: 0 0 1.2rem;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.resumen-producto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.resumen-producto img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.resumen-producto-nombre {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
+  color: #0f172a;
+}
+
+.resumen-producto-cantidad {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+.resumen-producto-precio {
+  margin-left: auto;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1a1b4b;
+}
+
+.resumen-linea {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #64748b;
+  padding: 8px 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+.resumen-linea.resumen-total {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  border-top: 1px solid #cbd5e1;
+  margin-top: 4px;
+}
+
+/* --- Estados: vacío / confirmación --- */
+.checkout-vacio,
+.checkout-confirmacion {
+  text-align: center;
+  max-width: 520px;
+  margin: 3rem auto;
+  padding: 2.5rem;
+}
+
+.confirmacion-icono {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.numero-pedido {
+  color: #64748b;
+  margin-bottom: 1.2rem;
+}
+
+.resumen-confirmado {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: left;
+  margin: 1.5rem 0;
+}
+
+.resumen-confirmado h3 {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+}
+
+.resumen-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #475569;
+  padding: 6px 0;
+}
+
+.resumen-item.resumen-total {
+  border-top: 1px solid #e2e8f0;
+  margin-top: 6px;
+  padding-top: 10px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.btn-volver-tienda {
+  display: inline-block;
+  margin-top: 1rem;
+  background: #1a1b4b;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 800px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-resumen {
+    position: static;
+  }
+}
