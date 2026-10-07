@@ -51,22 +51,16 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** c
 
 ```text
 electiva-2/
-├── README.md                      ← este archivo
-├── iphone-15/                     ← recursos originales del modelo 3D (FBX + texturas)
-└── electiva-2-main/
-    ├── dist/                      ← build de producción generado por Vite
-    ├── iphone-15/                 ← copia de los recursos del modelo 3D
-    ├── src/, public/, backend/    ← versión anterior del proyecto
-    └── electiva-2-main/           ← ⭐ VERSIÓN MÁS RECIENTE DEL PROYECTO
-        ├── backend/               ← servidor Express (aún sin implementar)
-        ├── public/                ← archivos estáticos (imágenes, modelos 3D)
-        ├── src/                   ← código fuente de React
-        ├── index.html
-        ├── package.json
-        └── vite.config.js
+├── README.md                  ← este archivo
+└── electiva-2-main/           ← proyecto (versión más reciente)
+    ├── backend/               ← servidor Express (aún sin implementar)
+    ├── iphone-15/             ← recursos originales del modelo 3D (ZIP + texturas)
+    ├── public/                ← archivos estáticos (imágenes, modelos 3D)
+    ├── src/                   ← código fuente de React
+    ├── index.html
+    ├── package.json
+    └── vite.config.js
 ```
-
-> **Importante:** la versión más completa del proyecto (con inicio de sesión, registro, pedidos y panel de administración) está en **`electiva-2-main/electiva-2-main/`**. La carpeta `electiva-2-main/` contiene una versión anterior sin esas funciones.
 
 ## 🧩 Estructura del código fuente
 
@@ -110,8 +104,8 @@ src/
 # 1. Clonar el repositorio
 git clone https://github.com/HG-FWEL/electiva-2.git
 
-# 2. Entrar a la versión más reciente del proyecto
-cd electiva-2/electiva-2-main/electiva-2-main
+# 2. Entrar a la carpeta del proyecto
+cd electiva-2/electiva-2-main
 
 # 3. Instalar dependencias
 npm install
@@ -127,7 +121,7 @@ Luego abre en el navegador la URL que muestra la terminal (por defecto `http://l
 | Comando | Descripción |
 |---------|-------------|
 | `npm run dev` | Inicia el servidor de desarrollo con recarga en caliente. |
-| `npm run build` | Genera el build de producción en `../dist` (es decir, `electiva-2-main/dist`). |
+| `npm run build` | Genera el build de producción en `dist/` (es decir, `electiva-2-main/dist`). |
 | `npm run preview` | Sirve localmente el build de producción. |
 | `npm run lint` | Revisa el código con Oxlint. |
 
