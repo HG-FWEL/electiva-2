@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { useOrders } from '../context/OrdersContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { handleImgError } from '../utils/placeholder';
 import { formatPrecioCOP } from '../utils/precio';
@@ -12,10 +14,12 @@ const ENVIO_EXPRESS = 15;
 
 function Checkout() {
   const { carrito, totalPrecio, vaciarCarrito } = useCart();
+  const { usuarioActual } = useAuth();
+  const { registrarPedido } = useOrders();
   const [metodoEnvio, setMetodoEnvio] = useState('estandar');
   const [datos, setDatos] = useState({
-    nombre: '',
-    email: '',
+    nombre: usuarioActual?.nombre || '',
+    email: usuarioActual?.email || '',
     telefono: '',
     direccion: '',
     ciudad: '',
@@ -49,13 +53,20 @@ function Checkout() {
     if (!validar()) return;
 
     const numeroPedido = `MM-${Date.now().toString().slice(-6)}`;
-    setPedidoConfirmado({
+    const pedido = {
       numero: numeroPedido,
       items: carrito,
+      subtotal: totalPrecio,
+      costoEnvio,
       total: totalConEnvio,
       datos,
       metodoEnvio,
-    });
+      usuario: usuarioActual
+        ? { id: usuarioActual.id, nombre: usuarioActual.nombre, email: usuarioActual.email }
+        : null,
+    };
+    registrarPedido(pedido);
+    setPedidoConfirmado(pedido);
     vaciarCarrito();
   };
 

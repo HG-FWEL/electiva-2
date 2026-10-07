@@ -114,6 +114,97 @@ html, body, #root {
   font-size: 0.9rem;
 }
 
+.nav-cuenta {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-left: 2.5rem;
+}
+
+.nav-cuenta a,
+.nav-cuenta button {
+  margin-left: 0;
+}
+
+.nav-cuenta-nombre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #0f172a;
+  font-size: 0.9rem;
+}
+
+/* Ícono "duotone" simulado para el usuario cliente (fondo suave + trazo nítido) */
+.icono-duotone {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+}
+
+.icono-duotone-fondo {
+  position: absolute;
+  inset: 0;
+  color: rgb(53, 178, 154);
+  opacity: 0.55;
+  filter: blur(1.5px);
+  transform: scale(1.35);
+}
+
+.icono-duotone-frente {
+  position: relative;
+  color: rgb(86, 230, 179);
+}
+
+.icono-usuario-admin {
+  color: #1a1b4b;
+}
+
+.nav-crear-cuenta {
+  background: #00d1a0;
+  color: #0f172a !important;
+  padding: 8px 18px;
+  border-radius: 50px;
+  font-weight: 700 !important;
+}
+
+.nav-crear-cuenta:hover {
+  background: #00b88d;
+  color: #0f172a !important;
+}
+
+.nav-admin-link {
+  color: #00a881 !important;
+  font-weight: 700 !important;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.25rem;
+  transition: transform 0.15s ease;
+}
+
+.nav-admin-link:hover {
+  transform: rotate(25deg);
+}
+
+.nav-cerrar-sesion {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+}
+
+.nav-cerrar-sesion:hover {
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
 /* --- 2. HERO SECTION --- */
 .hero {
   width: 100%;
@@ -292,6 +383,11 @@ html, body, #root {
 
   .nav-carrito-btn {
     margin-left: 0;
+  }
+
+  .nav-cuenta {
+    margin-left: 0;
+    flex-wrap: wrap;
   }
 
   .navbar-buscador {

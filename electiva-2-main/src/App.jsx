@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import { CartProvider, useCart } from './context/CartContext';
 import { AdminProductsProvider } from './context/AdminProductsContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { OrdersProvider } from './context/OrdersContext';
 import CarritoModal from './components/CarritoModal';
 import Inicio from './pages/Inicio';
 import Productos from './pages/Productos';
@@ -18,13 +20,27 @@ import DetalleProducto from './pages/DetalleProducto';
 import Checkout from './pages/Checkout';
 import Favoritos from './pages/Favoritos';
 import Buscar from './pages/Buscar';
+import Login from './pages/Login';
+import Registro from './pages/Registro';
+import Admin from './pages/Admin';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCartShopping, faHeart, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons';
+import { faCartShopping, faHeart, faMagnifyingGlass, faUser, faUserShield, faGears } from '@fortawesome/free-solid-svg-icons';
 
+// Simula un ícono "duotone" (fondo suave + trazo nítido) con el paquete gratuito
+// de Font Awesome, ya que fa-duotone real requiere una licencia Pro.
+function IconoDuotone({ icon }) {
+  return (
+    <span className="icono-duotone" aria-hidden="true">
+      <FontAwesomeIcon icon={icon} className="icono-duotone-fondo" />
+      <FontAwesomeIcon icon={icon} className="icono-duotone-frente" />
+    </span>
+  );
+}
 
 function NavbarContent({ onOpenCart }) {
   const { totalItems, favoritos } = useCart();
+  const { usuarioActual, esAdmin, cerrarSesion } = useAuth();
   const [busqueda, setBusqueda] = useState('');
   const navigate = useNavigate();
 
@@ -33,6 +49,11 @@ function NavbarContent({ onOpenCart }) {
     if (busqueda.trim()) {
       navigate(`/buscar?q=${encodeURIComponent(busqueda.trim())}`);
     }
+  };
+
+  const handleCerrarSesion = () => {
+    cerrarSesion();
+    navigate('/');
   };
 
   return (
@@ -58,9 +79,44 @@ function NavbarContent({ onOpenCart }) {
         <button onClick={onOpenCart} className="nav-carrito-btn">
          <FontAwesomeIcon icon={faCartShopping} /> <span className="nav-badge">{totalItems}</span>
         </button>
+
+        {usuarioActual ? (
+          <div className="nav-cuenta">
+            <span className="nav-cuenta-nombre">
+              {esAdmin ? (
+                <FontAwesomeIcon icon={faUserShield} className="icono-usuario-admin" />
+              ) : (
+                <IconoDuotone icon={faUser} />
+              )}
+              {usuarioActual.nombre.split(' ')[0]}
+            </span>
+            {esAdmin && (
+              <Link to="/admin" className="nav-admin-link" title="Panel de administración" aria-label="Panel de administración">
+                <IconoDuotone icon={faGears} />
+              </Link>
+            )}
+            <button type="button" className="nav-cerrar-sesion" onClick={handleCerrarSesion}>
+              Cerrar sesión
+            </button>
+          </div>
+        ) : (
+          <div className="nav-cuenta">
+            <Link to="/login">Iniciar sesión</Link>
+            <Link to="/registro" className="nav-crear-cuenta">Crear cuenta</Link>
+          </div>
+        )}
       </nav>
     </header>
   );
+}
+
+function RutaAdmin({ children }) {
+  const { usuarioActual, esAdmin, listo } = useAuth();
+
+  if (!listo) return null;
+  if (!usuarioActual) return <Navigate to="/login" state={{ from: '/admin' }} replace />;
+  if (!esAdmin) return <Navigate to="/" replace />;
+  return children;
 }
 
 // COMPONENTE PIE DE PÁGINA (FOOTER)
@@ -112,6 +168,16 @@ function AppShell() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/favoritos" element={<Favoritos />} />
         <Route path="/buscar" element={<Buscar />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route
+          path="/admin"
+          element={
+            <RutaAdmin>
+              <Admin />
+            </RutaAdmin>
+          }
+        />
       </Routes>
 
       {/* PIE DE PÁGINA AHORA VISIBLE EN TODAS LAS RUTAS */}
@@ -122,13 +188,17 @@ function AppShell() {
 
 function App() {
   return (
-    <AdminProductsProvider>
-      <CartProvider>
-        <BrowserRouter>
-          <AppShell />
-        </BrowserRouter>
-      </CartProvider>
-    </AdminProductsProvider>
+    <AuthProvider>
+      <AdminProductsProvider>
+        <OrdersProvider>
+          <CartProvider>
+            <BrowserRouter>
+              <AppShell />
+            </BrowserRouter>
+          </CartProvider>
+        </OrdersProvider>
+      </AdminProductsProvider>
+    </AuthProvider>
   );
 }
 
