@@ -5,7 +5,8 @@ import { productos as productosEstaticos } from '../data/Productos';
 const AdminProductsContext = createContext();
 
 const ADMIN_PRODUCTOS_KEY = 'movimarket_productos_admin';
-const ADMIN_SESION_KEY = 'movimarket_admin_sesion';
+const OVERRIDES_KEY = 'movimarket_productos_overrides';
+const ELIMINADOS_KEY = 'movimarket_productos_eliminados';
 
 function leerAlmacenado(clave, valorPorDefecto) {
   try {
@@ -27,15 +28,24 @@ function guardarAlmacenado(clave, valor) {
 
 export function AdminProductsProvider({ children }) {
   const [productosAdmin, setProductosAdmin] = useState(() => leerAlmacenado(ADMIN_PRODUCTOS_KEY, []));
-  const [sesionAdmin, setSesionAdmin] = useState(() => leerAlmacenado(ADMIN_SESION_KEY, false));
+  // Cambios aplicados sobre productos del catálogo original: { [id]: { campo: valor, ... } }
+  const [overrides, setOverrides] = useState(() => leerAlmacenado(OVERRIDES_KEY, {}));
+  // IDs de productos (del catálogo original o creados por un admin) que se ocultaron de la tienda.
+  const [eliminados, setEliminados] = useState(() => leerAlmacenado(ELIMINADOS_KEY, []));
 
   useEffect(() => {
     guardarAlmacenado(ADMIN_PRODUCTOS_KEY, productosAdmin);
   }, [productosAdmin]);
 
   useEffect(() => {
-    guardarAlmacenado(ADMIN_SESION_KEY, sesionAdmin);
-  }, [sesionAdmin]);
+    guardarAlmacenado(OVERRIDES_KEY, overrides);
+  }, [overrides]);
+
+  useEffect(() => {
+    guardarAlmacenado(ELIMINADOS_KEY, eliminados);
+  }, [eliminados]);
+
+  const esProductoPersonalizado = (id) => productosAdmin.some((p) => p.id === id);
 
   const agregarProducto = (producto) => {
     const nuevoProducto = {
@@ -47,20 +57,34 @@ export function AdminProductsProvider({ children }) {
     return nuevoProducto;
   };
 
+  // Funciona tanto para productos creados desde el panel como para los del
+  // catálogo original: a estos últimos se les guarda un "override" con los
+  // campos modificados, sin tocar el archivo fuente de datos.
   const editarProducto = (id, cambios) => {
-    setProductosAdmin((prev) => prev.map((p) => (p.id === id ? { ...p, ...cambios } : p)));
+    if (esProductoPersonalizado(id)) {
+      setProductosAdmin((prev) => prev.map((p) => (p.id === id ? { ...p, ...cambios } : p)));
+    } else {
+      setOverrides((prev) => ({ ...prev, [id]: { ...prev[id], ...cambios } }));
+    }
   };
 
   const eliminarProducto = (id) => {
-    setProductosAdmin((prev) => prev.filter((p) => p.id !== id));
+    if (esProductoPersonalizado(id)) {
+      setProductosAdmin((prev) => prev.filter((p) => p.id !== id));
+    } else {
+      setEliminados((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    }
   };
 
-  const iniciarSesionAdmin = () => setSesionAdmin(true);
-  const cerrarSesionAdmin = () => setSesionAdmin(false);
-
-  // Catálogo completo que usa el resto de la tienda: productos "de fábrica" +
-  // los que se agregaron desde el panel de administración.
-  const catalogoCompleto = [...productosEstaticos, ...productosAdmin];
+  // Catálogo completo que usa el resto de la tienda: productos "de fábrica"
+  // (con sus ediciones aplicadas) + los agregados desde el panel de admin,
+  // sin contar los que fueron eliminados.
+  const catalogoCompleto = [
+    ...productosEstaticos
+      .filter((p) => !eliminados.includes(p.id))
+      .map((p) => (overrides[p.id] ? { ...p, ...overrides[p.id] } : p)),
+    ...productosAdmin.filter((p) => !eliminados.includes(p.id)),
+  ];
 
   return (
     <AdminProductsContext.Provider
@@ -70,9 +94,7 @@ export function AdminProductsProvider({ children }) {
         agregarProducto,
         editarProducto,
         eliminarProducto,
-        sesionAdmin,
-        iniciarSesionAdmin,
-        cerrarSesionAdmin,
+        esProductoPersonalizado,
       }}
     >
       {children}
