@@ -41,7 +41,7 @@
 
 .producto-modal-imagen {
   flex: 1 1 280px;
-  background: #f1f5f9;
+  background: var(--color-fondo-gris);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -74,7 +74,7 @@
 .producto-modal-marca {
   display: inline-block;
   background: #e0fdf6;
-  color: #00a884;
+  color: var(--color-marca-texto);
   font-size: 0.75rem;
   font-weight: bold;
   letter-spacing: 0.05em;
@@ -84,33 +84,37 @@
 }
 
 .producto-modal-favorito {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-borde);
   border-radius: 20px;
-  padding: 4px 12px;
+  padding: 6px 12px;
   font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
-  color: #64748b;
+  color: var(--color-texto-secundario);
 }
 
 .producto-modal-favorito.activo {
   border-color: #fca5a5;
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .producto-modal-stock {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #16a34a;
+  color: #15803d;
   margin: 0 0 14px;
 }
 
 .producto-modal-stock.bajo {
-  color: #f59e0b;
+  color: var(--color-aviso);
 }
 
 .producto-modal-stock.agotado {
-  color: #ef4444;
+  color: var(--color-error);
 }
 
 .producto-modal-cantidad {
@@ -119,23 +123,7 @@
   gap: 12px;
   margin: 4px 0 18px;
   font-size: 0.9rem;
-  color: #0f172a;
-}
-
-.cantidad-controles {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cantidad-controles button {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  cursor: pointer;
-  font-weight: bold;
+  color: var(--color-texto);
 }
 
 .producto-modal-ficha {
@@ -143,7 +131,7 @@
   text-align: center;
   margin-top: 12px;
   font-size: 0.82rem;
-  color: #00a884;
+  color: var(--color-marca-texto);
   text-decoration: none;
   font-weight: 600;
 }
@@ -154,25 +142,25 @@
 
 .producto-modal-info h2 {
   margin: 0 0 6px;
-  color: #0f172a;
+  color: var(--color-texto);
   font-size: 1.4rem;
 }
 
 .producto-modal-precio {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #00a884;
+  color: var(--color-primario);
   margin: 0 0 16px;
 }
 
 .producto-modal-descripcion h4 {
   margin: 0 0 6px;
-  color: #0f172a;
+  color: var(--color-texto);
   font-size: 0.95rem;
 }
 
 .producto-modal-descripcion p {
-  color: #475569;
+  color: var(--color-texto-secundario);
   line-height: 1.5;
   margin: 0 0 20px;
 }
@@ -186,8 +174,12 @@
 
 .producto-modal-acciones .btn-agregar,
 .producto-modal-acciones .btn-comprar-ahora {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: none;
-  border-radius: 25px;
+  border-radius: var(--radio-pildora);
   padding: 12px 20px;
   font-weight: bold;
   cursor: pointer;
@@ -201,13 +193,14 @@
 }
 
 .producto-modal-acciones .btn-agregar {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--color-fondo-gris);
+  border: 1px solid var(--color-borde);
+  color: var(--color-texto);
 }
 
 .producto-modal-acciones .btn-comprar-ahora {
-  background: #00d1a0;
-  color: #0f172a;
+  background: var(--color-marca);
+  color: var(--color-texto);
 }
 
 .producto-modal-acciones button:disabled {
@@ -217,7 +210,7 @@
 
 .producto-modal-hint {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--color-texto-suave);
   margin: 14px 0 0;
   text-align: center;
 }

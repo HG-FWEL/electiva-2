@@ -1,0 +1,269 @@
+/* Formulario de producto del admin. Hereda la base de .admin-form (Admin.css). */
+.admin-form.form-producto {
+  max-width: 980px;
+  gap: 1.2rem;
+}
+
+.form-producto-subtitulo {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.form-producto-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1.8rem;
+  align-items: start;
+}
+
+.form-producto-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.form-producto-grupo {
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  padding: 1rem 1.2rem 1.2rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.form-producto-grupo legend {
+  padding: 0 6px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primario);
+}
+
+/* Campo: etiqueta + control + error o ayuda */
+.form-producto-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-producto-etiqueta {
+  font-size: 0.85rem;
+  color: var(--color-texto-secundario);
+  font-weight: 600;
+}
+
+.form-producto-ayuda {
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+  font-weight: 500;
+}
+
+.form-producto-error {
+  font-size: 0.75rem;
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.form-producto-advertencia {
+  font-size: 0.75rem;
+  color: #b45309;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-producto-campo.con-error input,
+.form-producto-campo.con-error select,
+.form-producto-campo.con-error .form-producto-prefijo {
+  border-color: var(--color-error);
+}
+
+/* Precio con "$" delante */
+.form-producto-prefijo {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-producto-prefijo:focus-within {
+  border-color: var(--color-marca);
+  box-shadow: 0 0 0 3px rgba(0, 209, 160, 0.15);
+}
+
+.form-producto-prefijo span {
+  padding: 0 4px 0 12px;
+  color: var(--color-texto-suave);
+  font-weight: 700;
+}
+
+.admin-form .form-producto-prefijo input {
+  border: none;
+  box-shadow: none;
+  flex: 1;
+  min-width: 0;
+  padding-left: 4px;
+}
+
+/* Imagen: pestañas + zona para soltar archivos */
+.form-producto-pestanas {
+  display: inline-flex;
+  background: var(--color-fondo-gris);
+  border-radius: 999px;
+  padding: 4px;
+  align-self: flex-start;
+}
+
+.form-producto-pestanas button {
+  border: none;
+  background: transparent;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-producto-pestanas button.activa {
+  background: #ffffff;
+  color: var(--color-primario);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+}
+
+.form-producto-zona {
+  border: 2px dashed var(--color-borde-fuerte);
+  border-radius: 14px;
+  background: var(--color-fondo-suave);
+  padding: 1.4rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  color: var(--color-texto-suave);
+  font-size: 0.85rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.form-producto-zona:hover,
+.form-producto-zona:focus-visible,
+.form-producto-zona.arrastrando {
+  border-color: var(--color-marca);
+  background: #f0fdf9;
+  outline: none;
+}
+
+.form-producto-zona.con-error {
+  border-color: #fca5a5;
+}
+
+.form-producto-zona p {
+  margin: 0.4rem 0 0.2rem;
+}
+
+.form-producto-zona strong {
+  color: var(--color-marca-texto);
+}
+
+.form-producto-zona small {
+  color: var(--color-texto-suave);
+}
+
+.form-producto-zona img {
+  max-height: 120px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.form-producto-zona-icono {
+  font-size: 1.8rem;
+  color: var(--color-texto-suave);
+}
+
+/* Opciones avanzadas (plegables) */
+.form-producto-avanzado {
+  border: 1px solid var(--color-borde);
+  border-radius: 16px;
+  padding: 0.8rem 1.2rem;
+}
+
+.form-producto-avanzado summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-texto-secundario);
+}
+
+.form-producto-avanzado[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding-bottom: 1.2rem;
+}
+
+/* Vista previa */
+.form-producto-vista-previa {
+  position: sticky;
+  top: 0;
+  background: var(--color-fondo-suave);
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.form-producto-vista-previa-titulo {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-texto-suave);
+  margin-bottom: 0.8rem;
+}
+
+.form-producto-tarjeta {
+  pointer-events: none;
+}
+
+.form-producto-vista-previa-nota {
+  margin: 0.8rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+  text-align: center;
+}
+
+.form-producto-resumen-errores {
+  margin-right: auto;
+  align-self: center;
+  font-size: 0.8rem;
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+.btn-admin-guardar:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+@media (max-width: 860px) {
+  .form-producto-cuerpo {
+    grid-template-columns: 1fr;
+  }
+
+  /* En pantallas angostas la vista previa va arriba, más compacta */
+  .form-producto-vista-previa {
+    position: static;
+    order: -1;
+    max-width: 280px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}

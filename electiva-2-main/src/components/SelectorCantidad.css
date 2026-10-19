@@ -1,0 +1,57 @@
+.selector-cantidad {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--color-borde);
+  border-radius: 999px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.selector-cantidad button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: var(--color-primario);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.selector-cantidad button:hover:not(:disabled) {
+  background: var(--color-marca-suave);
+}
+
+.selector-cantidad button:disabled {
+  color: var(--color-borde-fuerte);
+  cursor: not-allowed;
+}
+
+.selector-cantidad span {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-texto);
+}
+
+.selector-cantidad-pequeno button {
+  width: 28px;
+  height: 28px;
+  font-size: 1rem;
+}
+
+/* En pantallas táctiles todos los botones miden al menos 40px */
+@media (pointer: coarse) {
+  .selector-cantidad button,
+  .selector-cantidad-pequeno button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.selector-cantidad-pequeno span {
+  min-width: 22px;
+  font-size: 0.85rem;
+}

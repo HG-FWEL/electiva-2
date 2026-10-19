@@ -21,7 +21,7 @@ function Registro() {
   const validar = () => {
     if (!datos.nombre.trim()) return 'Ingresa tu nombre completo.';
     if (!/^\S+@\S+\.\S+$/.test(datos.email)) return 'Ingresa un correo válido.';
-    if (datos.password.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+    if (datos.password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.';
     if (datos.password !== datos.confirmar) return 'Las contraseñas no coinciden.';
     return '';
   };
@@ -84,7 +84,7 @@ function Registro() {
               type="password"
               value={datos.password}
               onChange={handleChange('password')}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               autoComplete="new-password"
             />
           </label>

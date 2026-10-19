@@ -1,10 +1,10 @@
 // src/pages/Admin.jsx
 import React, { useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useAdminProducts } from '../context/AdminProductsContext';
-import { useOrders } from '../context/OrdersContext';
+import { useProductos } from '../context/ProductosContext';
+import { usePedidos } from '../hooks/usePedidos';
 import AdminPedidos from '../components/AdminPedidos';
-import { categorias } from '../data/Productos';
+import FormularioProducto from '../components/FormularioProducto';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { handleImgError } from '../utils/placeholder';
 import { formatPrecioCOP } from '../utils/precio';
@@ -18,24 +18,10 @@ import {
   faLayerGroup,
   faTags,
   faMagnifyingGlass,
-  faXmark,
   faUserShield,
   faReceipt,
 } from '@fortawesome/free-solid-svg-icons';
 import './Admin.css';
-
-const PRODUCTO_VACIO = {
-  nombre: '',
-  categoria: categorias[0]?.slug || '',
-  marca: '',
-  linea: '',
-  especificaciones: '',
-  descripcion: '',
-  precio: '',
-  stock: '',
-  imagen: '',
-  modelo3d: '',
-};
 
 function estadoStock(stock) {
   if (stock <= 0) return { texto: 'Agotado', clase: 'stock-agotado' };
@@ -45,16 +31,22 @@ function estadoStock(stock) {
 
 function Admin() {
   const { usuarioActual } = useAuth();
-  const { catalogoCompleto, agregarProducto, editarProducto, eliminarProducto } = useAdminProducts();
-  const { pedidos } = useOrders();
+  const {
+    productos: catalogoCompleto,
+    cargando: cargandoProductos,
+    error: errorProductos,
+    agregarProducto,
+    editarProducto,
+    eliminarProducto,
+  } = useProductos();
+  const pedidosApi = usePedidos();
+  const { pedidos } = pedidosApi;
   useDocumentTitle('Panel de administración');
 
   const [pestana, setPestana] = useState('productos');
   const [busqueda, setBusqueda] = useState('');
-  const [editandoId, setEditandoId] = useState(null);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [formulario, setFormulario] = useState(PRODUCTO_VACIO);
-  const [error, setError] = useState('');
+  // null = formulario cerrado; { producto: null } = nuevo; { producto } = editar
+  const [formulario, setFormulario] = useState(null);
   const [mensajeExito, setMensajeExito] = useState('');
 
   const estadisticas = useMemo(() => {
@@ -65,7 +57,7 @@ function Admin() {
     return { total, sinStock, stockBajo, categoriasActivas };
   }, [catalogoCompleto]);
 
-  const pedidosPendientes = pedidos.filter((p) => p.estado === 'revision').length;
+  const pedidosPendientes = pedidos.filter((p) => p.envio.estado === 'revision').length;
 
   const productosFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -75,94 +67,33 @@ function Admin() {
     );
   }, [catalogoCompleto, busqueda]);
 
-  const abrirFormularioNuevo = () => {
-    setFormulario(PRODUCTO_VACIO);
-    setEditandoId(null);
-    setError('');
+  const abrirFormulario = (producto = null) => {
     setMensajeExito('');
-    setMostrarFormulario(true);
+    setFormulario({ producto });
   };
 
-  const abrirFormularioEdicion = (producto) => {
-    setFormulario({
-      nombre: producto.nombre || '',
-      categoria: producto.categoria || categorias[0]?.slug || '',
-      marca: producto.marca || '',
-      linea: producto.linea || '',
-      especificaciones: producto.especificaciones || '',
-      descripcion: producto.descripcion || '',
-      precio: producto.precio ?? '',
-      stock: producto.stock ?? '',
-      imagen: producto.imagen || '',
-      modelo3d: producto.modelo3d || '',
-    });
-    setEditandoId(producto.id);
-    setError('');
-    setMensajeExito('');
-    setMostrarFormulario(true);
-  };
-
-  const cerrarFormulario = () => {
-    setMostrarFormulario(false);
-    setEditandoId(null);
-    setFormulario(PRODUCTO_VACIO);
-    setError('');
-  };
-
-  const handleChange = (campo) => (e) => {
-    setFormulario((prev) => ({ ...prev, [campo]: e.target.value }));
-  };
-
-  const validar = () => {
-    if (!formulario.nombre.trim()) return 'Ingresa el nombre del producto.';
-    if (!formulario.categoria.trim()) return 'Selecciona una categoría.';
-    if (formulario.precio === '' || Number(formulario.precio) < 0) return 'Ingresa un precio válido.';
-    if (formulario.stock === '' || Number(formulario.stock) < 0) return 'Ingresa un stock válido.';
-    if (!formulario.imagen.trim()) return 'Ingresa la URL de una imagen.';
-    return '';
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const mensajeError = validar();
-    if (mensajeError) {
-      setError(mensajeError);
-      setMensajeExito('');
-      return;
-    }
-
-    const datosProducto = {
-      nombre: formulario.nombre.trim(),
-      categoria: formulario.categoria.trim(),
-      marca: formulario.marca.trim() || undefined,
-      linea: formulario.linea.trim() || undefined,
-      especificaciones: formulario.especificaciones.trim(),
-      descripcion: formulario.descripcion.trim() || formulario.especificaciones.trim(),
-      precio: Number(formulario.precio),
-      stock: Number(formulario.stock),
-      imagen: formulario.imagen.trim(),
-      modelo3d: formulario.modelo3d.trim() || undefined,
-    };
-
-    if (editandoId) {
-      editarProducto(editandoId, datosProducto);
-      setMensajeExito('Producto actualizado correctamente.');
+  // Si el backend rechaza el guardado, el error sube al formulario y se muestra allí.
+  const handleGuardar = async (datosProducto) => {
+    const { producto } = formulario;
+    if (producto) {
+      await editarProducto(producto.id, datosProducto);
+      setMensajeExito(`"${datosProducto.nombre}" se actualizó correctamente.`);
     } else {
-      agregarProducto(datosProducto);
-      setMensajeExito('Producto agregado correctamente.');
+      await agregarProducto(datosProducto);
+      setMensajeExito(`"${datosProducto.nombre}" ya está a la venta en la tienda.`);
     }
-
-    setError('');
-    setMostrarFormulario(false);
-    setEditandoId(null);
-    setFormulario(PRODUCTO_VACIO);
+    setFormulario(null);
   };
 
-  const handleEliminar = (producto) => {
+  const handleEliminar = async (producto) => {
     const confirmado = window.confirm(`¿Eliminar "${producto.nombre}" de la tienda?`);
     if (!confirmado) return;
-    eliminarProducto(producto.id);
-    setMensajeExito('Producto eliminado.');
+    try {
+      await eliminarProducto(producto.id);
+      setMensajeExito('Producto eliminado.');
+    } catch (errorEliminado) {
+      window.alert(`No se pudo eliminar el producto: ${errorEliminado.message}`);
+    }
   };
 
   return (
@@ -180,7 +111,7 @@ function Admin() {
           </div>
         </div>
         {pestana === 'productos' && (
-          <button type="button" className="btn-admin-nuevo" onClick={abrirFormularioNuevo}>
+          <button type="button" className="btn-admin-nuevo" onClick={() => abrirFormulario()}>
             <FontAwesomeIcon icon={faPlus} /> Agregar producto
           </button>
         )}
@@ -209,7 +140,7 @@ function Admin() {
       </div>
 
       {pestana === 'pedidos' ? (
-        <AdminPedidos />
+        <AdminPedidos {...pedidosApi} />
       ) : (
       <>
       <div className="admin-stats">
@@ -256,89 +187,13 @@ function Admin() {
 
       {mensajeExito && <div className="admin-exito">{mensajeExito}</div>}
 
-      {mostrarFormulario && (
-        <div className="admin-form-overlay" onClick={cerrarFormulario}>
-          <form className="admin-form" onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()} noValidate>
-            <div className="admin-form-header">
-              <h2>{editandoId ? 'Editar producto' : 'Nuevo producto'}</h2>
-              <button type="button" className="btn-admin-cerrar" onClick={cerrarFormulario} aria-label="Cerrar">
-                <FontAwesomeIcon icon={faXmark} />
-              </button>
-            </div>
-            {error && <div className="auth-error">{error}</div>}
-
-            <label>
-              Nombre
-              <input type="text" value={formulario.nombre} onChange={handleChange('nombre')} />
-            </label>
-
-            <div className="admin-form-fila">
-              <label>
-                Categoría
-                <select value={formulario.categoria} onChange={handleChange('categoria')}>
-                  {categorias.map((cat) => (
-                    <option key={cat.slug} value={cat.slug}>
-                      {cat.nombre}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Marca (opcional)
-                <input type="text" value={formulario.marca} onChange={handleChange('marca')} />
-              </label>
-            </div>
-
-            <label>
-              Especificaciones
-              <input
-                type="text"
-                value={formulario.especificaciones}
-                onChange={handleChange('especificaciones')}
-                placeholder="Ej: 256GB · Chip A17 Pro · Cámara 48MP"
-              />
-            </label>
-
-            <label>
-              Descripción (opcional)
-              <textarea rows="3" value={formulario.descripcion} onChange={handleChange('descripcion')} />
-            </label>
-
-            <div className="admin-form-fila">
-              <label>
-                Precio (USD)
-                <input type="number" min="0" step="0.01" value={formulario.precio} onChange={handleChange('precio')} />
-              </label>
-
-              <label>
-                Stock
-                <input type="number" min="0" step="1" value={formulario.stock} onChange={handleChange('stock')} />
-              </label>
-            </div>
-
-            <label>
-              URL de la imagen
-              <input type="text" value={formulario.imagen} onChange={handleChange('imagen')} placeholder="https://…" />
-            </label>
-
-            {formulario.imagen && (
-              <div className="admin-form-preview">
-                <img src={formulario.imagen} alt="Vista previa" onError={handleImgError} />
-                <span>Vista previa</span>
-              </div>
-            )}
-
-            <div className="admin-form-acciones">
-              <button type="button" className="btn-admin-cancelar" onClick={cerrarFormulario}>
-                Cancelar
-              </button>
-              <button type="submit" className="btn-admin-guardar">
-                {editandoId ? 'Guardar cambios' : 'Agregar producto'}
-              </button>
-            </div>
-          </form>
-        </div>
+      {formulario && (
+        <FormularioProducto
+          producto={formulario.producto}
+          productos={catalogoCompleto}
+          onGuardar={handleGuardar}
+          onCerrar={() => setFormulario(null)}
+        />
       )}
 
       <div className="admin-buscador">
@@ -393,7 +248,7 @@ function Admin() {
                     <button
                       type="button"
                       className="btn-admin-editar"
-                      onClick={() => abrirFormularioEdicion(producto)}
+                      onClick={() => abrirFormulario(producto)}
                       title="Editar"
                     >
                       <FontAwesomeIcon icon={faPen} />
@@ -413,7 +268,11 @@ function Admin() {
             {productosFiltrados.length === 0 && (
               <tr>
                 <td colSpan={6} className="admin-tabla-vacia">
-                  No hay productos que coincidan con tu búsqueda.
+                  {cargandoProductos
+                    ? 'Cargando productos…'
+                    : errorProductos
+                    ? `No se pudieron cargar los productos: ${errorProductos}`
+                    : 'No hay productos que coincidan con tu búsqueda.'}
                 </td>
               </tr>
             )}

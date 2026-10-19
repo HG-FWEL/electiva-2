@@ -1,48 +1,59 @@
 /* src/pages/DetalleProducto.css */
 .detalle-container {
   max-width: 1100px;
-  margin: 2rem auto;
+  margin: 1.5rem auto 3rem;
   padding: 0 1.5rem;
-  color: #f5f5f7;
+  color: var(--color-texto);
 }
 
 .btn-regresar {
   background: transparent;
   border: none;
-  color: #2997ff;
-  font-size: 1rem;
+  padding: 0;
+  color: var(--color-texto-suave);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-bottom: 1.5rem;
-  font-weight: 500;
+  margin-bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .btn-regresar:hover {
-  text-decoration: underline;
+  color: var(--color-primario);
 }
 
 .detalle-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 3rem;
-  background-color: #161617;
-  padding: 2.5rem;
-  border-radius: 20px;
-  border: 1px solid #222;
+  background-color: var(--color-fondo);
+  padding: 2rem;
+  border-radius: 24px;
+  border: 1px solid var(--color-borde);
 }
 
 .detalle-imagen {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #0d0d0e;
-  border-radius: 14px;
+  background-color: var(--color-fondo-gris);
+  border-radius: var(--radio-tarjeta);
   padding: 1.5rem;
+  min-height: 380px;
 }
 
 .detalle-imagen img {
   max-width: 100%;
   max-height: 380px;
   object-fit: contain;
+}
+
+.detalle-info {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
 }
 
 .detalle-top {
@@ -56,103 +67,136 @@
 .categoria-tag {
   font-size: 0.75rem;
   letter-spacing: 1.5px;
-  color: #86868b;
+  text-transform: uppercase;
+  color: var(--color-marca-texto);
   font-weight: 700;
 }
 
 .detalle-favorito {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: none;
-  border: 1px solid #333;
-  border-radius: 20px;
-  padding: 5px 14px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-pildora);
+  padding: 8px 14px;
   font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  color: #a1a1a6;
+  color: var(--color-texto-secundario);
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.detalle-favorito:hover {
+  border-color: var(--color-borde-fuerte);
 }
 
 .detalle-favorito.activo {
-  border-color: #ff375f;
-  color: #ff6482;
+  border-color: #fca5a5;
+  color: var(--color-error);
+}
+
+.detalle-info h1 {
+  font-size: 2.1rem;
+  line-height: 1.15;
+  margin: 0.6rem 0 0.6rem 0;
+  color: var(--color-texto);
+}
+
+.detalle-precio {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: var(--color-primario);
+  margin: 0 0 0.4rem;
 }
 
 .detalle-stock {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #34c759;
-  margin: -0.8rem 0 1.2rem;
+  color: #15803d;
+  margin: 0 0 1.4rem;
 }
 
 .detalle-stock.bajo {
-  color: #f5a623;
+  color: var(--color-aviso);
 }
 
 .detalle-stock.agotado {
-  color: #ff453a;
+  color: var(--color-error);
 }
 
-.detalle-info h1 {
-  font-size: 2.2rem;
-  margin: 0.4rem 0 0.8rem 0;
-  color: #ffffff;
-}
-
-.detalle-precio {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2997ff;
-  margin-bottom: 1.5rem;
+.detalle-descripcion {
+  border-top: 1px solid var(--color-borde);
+  padding-top: 1.2rem;
 }
 
 .detalle-descripcion h3 {
-  font-size: 1rem;
-  color: #f5f5f7;
+  font-size: 0.95rem;
+  color: var(--color-texto);
   margin-bottom: 0.5rem;
 }
 
 .detalle-descripcion p {
   line-height: 1.6;
-  color: #a1a1a6;
+  color: var(--color-texto-secundario);
   font-size: 0.95rem;
 }
 
+.detalle-cantidad {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 1.8rem;
+  font-weight: 600;
+  color: var(--color-texto-secundario);
+}
+
+.detalle-en-carrito {
+  margin: 0.8rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+/* Mismo patrón que la ventana rápida: acción principal llena, secundaria suave */
 .detalle-acciones {
   display: flex;
-  gap: 1rem;
-  margin-top: 2.5rem;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
 }
 
-.btn-agregar {
+.detalle-btn-comprar,
+.detalle-btn-agregar {
   flex: 1;
-  background-color: #0071e3;
-  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: none;
-  padding: 14px;
-  border-radius: 12px;
+  padding: 15px;
+  border-radius: var(--radio-pildora);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-.btn-agregar:hover {
-  background-color: #0077ed;
+.detalle-btn-comprar {
+  background-color: var(--color-marca);
+  color: var(--color-sobre-marca);
 }
 
-.btn-comprar {
-  flex: 1;
-  background-color: #34c759;
-  color: #ffffff;
-  border: none;
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+.detalle-btn-comprar:hover:not(:disabled) {
+  background-color: var(--color-marca-hover);
 }
 
-.btn-comprar:hover {
-  background-color: #30b753;
+.detalle-btn-agregar {
+  background-color: var(--color-fondo-gris);
+  color: var(--color-texto);
+  border: 1px solid var(--color-borde);
+}
+
+.detalle-btn-agregar:hover:not(:disabled) {
+  background-color: var(--color-borde);
 }
 
 .detalle-acciones button:disabled {
@@ -163,16 +207,22 @@
 .detalle-error-container {
   text-align: center;
   padding: 5rem 1rem;
-  color: #ffffff;
+  color: var(--color-texto-secundario);
+}
+
+.detalle-error-container h2 {
+  color: var(--color-texto);
+  margin-bottom: 0.5rem;
 }
 
 .btn-volver {
-  background-color: #0071e3;
-  color: #fff;
+  background-color: var(--color-primario);
+  color: #ffffff;
   border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  margin-top: 1rem;
+  padding: 12px 24px;
+  border-radius: var(--radio-pildora);
+  font-weight: 700;
+  margin-top: 1.2rem;
   cursor: pointer;
 }
 
@@ -180,9 +230,18 @@
   .detalle-card {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    padding: 1.2rem;
+  }
+
+  .detalle-imagen {
+    min-height: 260px;
+  }
+
+  .detalle-info h1 {
+    font-size: 1.6rem;
   }
 
   .detalle-acciones {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 }
