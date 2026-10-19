@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { categorias } from '../data/Productos';
-import { useAdminProducts } from '../context/AdminProductsContext';
+import { useProductos } from '../context/ProductosContext';
 import ProductCard from './ProductCard';
 import ProductoModal from './ProductoModal';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -10,6 +10,13 @@ import '../pages/Computadores.css';
 import './CategoryLayout.css';
 
 const PRODUCTOS_POR_PAGINA = 6;
+
+// "destacados" respeta el orden del catálogo; las demás opciones lo reordenan.
+const ORDENES = {
+  'precio-asc': { texto: 'Precio: menor a mayor', comparar: (a, b) => a.precio - b.precio },
+  'precio-desc': { texto: 'Precio: mayor a menor', comparar: (a, b) => b.precio - a.precio },
+  nombre: { texto: 'Nombre (A-Z)', comparar: (a, b) => a.nombre.localeCompare(b.nombre, 'es') },
+};
 
 function CategoryLayout({
   categoriaSlug,
@@ -21,16 +28,17 @@ function CategoryLayout({
 }) {
   const [filtroSeleccionado, setFiltroSeleccionado] = useState('Todas');
   const [busqueda, setBusqueda] = useState('');
+  const [orden, setOrden] = useState('destacados');
   const [visibleCount, setVisibleCount] = useState(PRODUCTOS_POR_PAGINA);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
 
   useDocumentTitle(titulo);
 
-  const { catalogoCompleto } = useAdminProducts();
+  const { productos, cargando, error } = useProductos();
 
   const productosCategoria = useMemo(
-    () => catalogoCompleto.filter((p) => p.categoria === categoriaSlug),
-    [catalogoCompleto, categoriaSlug]
+    () => productos.filter((p) => p.categoria === categoriaSlug),
+    [productos, categoriaSlug]
   );
 
   // Detecta automáticamente si esta categoría se filtra por "marca" o por "linea"
@@ -50,13 +58,16 @@ function CategoryLayout({
     return coincideFiltro && coincideBusqueda;
   });
 
-  const productosVisibles = productosFiltrados.slice(0, visibleCount);
+  const productosOrdenados = ORDENES[orden]
+    ? [...productosFiltrados].sort(ORDENES[orden].comparar)
+    : productosFiltrados;
+  const productosVisibles = productosOrdenados.slice(0, visibleCount);
   const hayMasProductos = visibleCount < productosFiltrados.length;
 
   // Si cambia el filtro o la búsqueda, volvemos a mostrar la primera tanda
   useEffect(() => {
     setVisibleCount(PRODUCTOS_POR_PAGINA);
-  }, [filtroSeleccionado, busqueda]);
+  }, [filtroSeleccionado, busqueda, orden]);
 
   return (
     <div className="computadores-page">
@@ -124,13 +135,23 @@ function CategoryLayout({
                 Mostrando {productosVisibles.length} de {productosFiltrados.length} producto
                 {productosFiltrados.length === 1 ? '' : 's'}
               </span>
-              <div className="sort-by">
-                Ordenar por: <strong>{ordenarPorTexto}</strong>
-              </div>
+              <label className="sort-by">
+                Ordenar por:
+                <select value={orden} onChange={(e) => setOrden(e.target.value)}>
+                  <option value="destacados">{ordenarPorTexto}</option>
+                  {Object.entries(ORDENES).map(([valor, { texto }]) => (
+                    <option key={valor} value={valor}>{texto}</option>
+                  ))}
+                </select>
+              </label>
             </div>
           </div>
 
-          {productosFiltrados.length === 0 ? (
+          {cargando ? (
+            <p className="sin-resultados">Cargando productos…</p>
+          ) : error ? (
+            <p className="sin-resultados">No pudimos cargar los productos. {error}</p>
+          ) : productosFiltrados.length === 0 ? (
             <p className="sin-resultados">No encontramos productos que coincidan con tu búsqueda.</p>
           ) : (
             <div className="grid-productos">

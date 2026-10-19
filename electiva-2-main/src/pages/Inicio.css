@@ -2,7 +2,7 @@
 
 .inicio-container {
   width: 100%;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--fuente);
   color: #1d1d1f;
   background-color: #000000;
   box-sizing: border-box;
@@ -19,14 +19,14 @@
   text-align: center;
   padding: 4rem 2rem 2rem 2rem;
   margin-bottom: 12px;
-  min-height: 720px;
+  min-height: 640px;
   box-sizing: border-box;
   overflow: hidden;
 }
 
 /* Hero Oscuro */
 .hero-dark {
-  background-color: #0b0f19;
+  background-color: var(--color-fondo-oscuro);
   color: #f5f5f7;
 }
 
@@ -45,14 +45,14 @@
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 1.5px;
-  color: #00d1a0;
+  color: var(--color-marca);
   text-transform: uppercase;
   margin-bottom: 0.5rem;
   display: inline-block;
 }
 
 .badge-dark {
-  color: #2563eb;
+  color: var(--color-marca-texto);
 }
 
 .hero-apple-title {
@@ -67,7 +67,33 @@
   font-size: 1.25rem;
   font-weight: 400;
   opacity: 0.85;
-  margin: 0.6rem 0 1.5rem 0;
+  margin: 0.6rem 0 0.4rem 0;
+}
+
+.hero-apple-precio {
+  font-size: 1rem;
+  font-weight: 600;
+  opacity: 0.7;
+  margin: 0 0 1.4rem 0;
+}
+
+/* Los botones del hero pueden ser <button> o <Link>: misma apariencia */
+.hero-apple-actions button,
+.hero-apple-actions a {
+  font-family: var(--fuente);
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.hero-apple-actions button {
+  border: none;
+}
+
+.hero-apple-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .hero-apple-actions {
@@ -80,25 +106,25 @@
 
 /* Botones Hero */
 .btn-apple-primary {
-  background-color: #0071e3;
-  color: #ffffff;
+  background-color: var(--color-marca);
+  color: var(--color-sobre-marca);
   padding: 10px 22px;
   border-radius: 980px;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 700;
   font-size: 0.95rem;
   transition: all 0.2s ease;
   display: inline-block;
 }
 
 .btn-apple-primary:hover {
-  background-color: #0077ed;
+  background-color: var(--color-marca-hover);
 }
 
-.btn-apple-secondary {
+.hero-apple-actions .btn-apple-secondary {
   background-color: transparent;
-  color: #2997ff;
-  border: 1px solid #2997ff;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
   padding: 10px 22px;
   border-radius: 980px;
   font-weight: 500;
@@ -108,7 +134,7 @@
 }
 
 .btn-apple-secondary:hover {
-  background-color: rgba(41, 151, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .btn-apple-dark {
@@ -122,10 +148,10 @@
   display: inline-block;
 }
 
-.btn-apple-outline {
+.hero-apple-actions .btn-apple-outline {
   background: transparent;
-  color: #0071e3;
-  border: 1px solid #0071e3;
+  color: var(--color-primario);
+  border: 1px solid var(--color-primario);
   padding: 10px 22px;
   border-radius: 980px;
   font-weight: 500;
@@ -152,6 +178,116 @@
 
 .hero-apple:hover .hero-apple-media img {
   transform: scale(1.03);
+}
+
+.inicio-seccion-titulo {
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+/* =========================================
+   EXPLORA POR CATEGORÍA (fila de íconos)
+   ========================================= */
+.inicio-categorias {
+  background-color: var(--color-fondo-oscuro);
+  color: #f5f5f7;
+  padding: 3rem 2rem;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.inicio-categorias-fila {
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 1200px;
+  margin: 1.8rem auto 0;
+}
+
+.inicio-categoria {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 1.2rem 0.4rem;
+  border-radius: 18px;
+  background: #161b29;
+  border: 1px solid #222838;
+  color: #f5f5f7;
+  text-decoration: none;
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.inicio-categoria:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-marca);
+  background: #1a2232;
+}
+
+.inicio-categoria-icono {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(0, 209, 160, 0.12);
+  color: var(--color-marca);
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+}
+
+.inicio-categoria-nombre {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.inicio-categoria-cantidad {
+  font-size: 0.72rem;
+  color: #86868b;
+}
+
+/* =========================================
+   DESTACADOS (productos reales)
+   ========================================= */
+.inicio-destacados {
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  padding: 3.5rem 2rem;
+  margin-bottom: 12px;
+}
+
+.inicio-destacados-cabecera {
+  max-width: 1240px;
+  margin: 0 auto 1.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.inicio-destacados-cabecera p {
+  margin: 0.4rem 0 0;
+  color: #6e6e73;
+}
+
+.inicio-destacados-cabecera .link-apple {
+  color: var(--color-marca-texto);
+}
+
+.inicio-destacados-grid {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.2rem;
+}
+
+.inicio-esqueleto-tarjeta {
+  height: 300px;
 }
 
 /* =========================================
@@ -181,6 +317,32 @@
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
+  text-decoration: none;
+  transition: transform 0.25s ease;
+}
+
+.bento-card:hover {
+  transform: scale(1.01);
+}
+
+.bento-card-img img {
+  transition: transform 0.4s ease;
+}
+
+.bento-card:hover .bento-card-img img {
+  transform: scale(1.05);
+}
+
+.bento-card-dato {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.6;
+  margin-bottom: 0.8rem;
+}
+
+.bento-card:hover .link-apple {
+  text-decoration: underline;
 }
 
 .bento-dark {
@@ -206,7 +368,7 @@
 }
 
 .link-apple {
-  color: #2997ff;
+  color: var(--color-marca);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
@@ -237,7 +399,7 @@
    3. FRANJA DE BENEFICIOS
    ========================================= */
 .beneficios-section {
-  background-color: #0b0f19;
+  background-color: var(--color-fondo-oscuro);
   border-top: 1px solid #222;
   padding: 4rem 2rem;
   margin-top: 12px;
@@ -270,15 +432,64 @@
   margin: 0;
 }
 
-/* RESPONSIVO PARA PANTALLAS PEQUEÑAS */
+/* RESPONSIVO */
+@media (max-width: 1100px) {
+  /* Las 9 categorías pasan a una fila que se desliza de lado */
+  .inicio-categorias-fila {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 8px;
+  }
+
+  .inicio-categoria {
+    flex: 0 0 120px;
+    scroll-snap-align: start;
+  }
+
+  .inicio-destacados-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
+  .hero-apple {
+    min-height: 0;
+    padding: 3rem 1rem 1.5rem;
+  }
   .hero-apple-title {
     font-size: 2.2rem;
+  }
+  .hero-apple-media {
+    height: 300px;
+  }
+  .inicio-categorias,
+  .inicio-destacados {
+    padding: 2.5rem 1rem;
+  }
+  .inicio-seccion-titulo {
+    font-size: 1.5rem;
+  }
+  .inicio-destacados-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
   }
   .bento-grid {
     grid-template-columns: 1fr;
   }
+  .bento-card {
+    min-height: 400px;
+  }
   .beneficios-container {
     grid-template-columns: 1fr;
   }
+}
+/* Enlaces sobre las tarjetas claras: verde oscuro para cumplir contraste */
+.bento-light .link-apple {
+  color: var(--color-marca-texto);
+}
+
+/* El visor 3D se integra al fondo oscuro del banner en vez de verse como una caja */
+.hero-dark .modelo3d-contenedor {
+  background: radial-gradient(circle at 50% 45%, rgba(0, 209, 160, 0.12), transparent 65%);
 }

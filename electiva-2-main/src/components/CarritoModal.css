@@ -36,8 +36,83 @@
 
 .empty-cart {
   text-align: center;
-  color: #888;
-  margin-top: 40px;
+  color: var(--color-texto-suave);
+  margin-top: 60px;
+}
+
+.empty-cart-icono {
+  font-size: 2.5rem;
+  color: var(--color-borde-fuerte);
+  margin: 0 0 0.5rem;
+}
+
+.btn-seguir-comprando {
+  margin-top: 0.8rem;
+  background: var(--color-primario);
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1.6rem;
+  border-radius: 50px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cart-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.cart-header-contador {
+  background: var(--color-marca);
+  color: var(--color-texto);
+  font-size: 0.75rem;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+.cart-item h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-texto);
+}
+
+.cart-item-subtotal {
+  color: var(--color-texto-suave);
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.cart-item-aviso {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: #b45309;
+  background: #fff7ed;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.cart-item-no-disponible img,
+.cart-item-no-disponible h4,
+.cart-item-no-disponible .cart-item-price {
+  opacity: 0.45;
+}
+
+.cart-item-no-disponible .cart-item-aviso {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.cart-footer-nota {
+  margin: -8px 0 12px;
+  font-size: 0.75rem;
+  color: var(--color-texto-suave);
+}
+
+.btn-checkout:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .cart-item {
@@ -54,16 +129,16 @@
   border: none;
   cursor: pointer;
   font-size: 0.95rem;
-  opacity: 0.6;
+  color: var(--color-texto-suave);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .btn-quitar-item:hover {
-  opacity: 1;
-}
-
-.quantity-controls button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+  color: var(--color-error);
+  background: var(--color-error-fondo);
 }
 
 .cart-item img {
@@ -78,25 +153,8 @@
 
 .cart-item-price {
   font-weight: bold;
-  color: #00d1a0;
+  color: var(--color-primario);
   margin: 4px 0;
-}
-
-.quantity-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 5px;
-}
-
-.quantity-controls button {
-  width: 26px;
-  height: 26px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  background: #f0f0f0;
-  cursor: pointer;
-  font-weight: bold;
 }
 
 .cart-footer {
@@ -114,8 +172,8 @@
 .btn-checkout {
   width: 100%;
   padding: 12px;
-  background: #00d1a0;
-  color: #0f172a;
+  background: var(--color-marca);
+  color: var(--color-texto);
   border: none;
   border-radius: 25px;
   font-weight: bold;
@@ -128,7 +186,7 @@
   padding: 8px;
   background: transparent;
   border: none;
-  color: #ef4444;
+  color: var(--color-error);
   cursor: pointer;
 }
 

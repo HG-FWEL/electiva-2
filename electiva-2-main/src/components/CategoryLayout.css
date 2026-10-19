@@ -22,7 +22,7 @@
 .filtro-label {
   font-weight: bold;
   margin-right: 5px;
-  color: #0f172a;
+  color: var(--color-texto);
   font-size: 0.85rem;
 }
 
@@ -42,7 +42,7 @@
   width: 100%;
   padding: 9px 16px;
   border-radius: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-borde);
   font-size: 0.85rem;
   outline: none;
   transition: border-color 0.2s ease;
@@ -50,7 +50,7 @@
 }
 
 .buscador-categoria input:focus {
-  border-color: #00d1a0;
+  border-color: var(--color-marca);
 }
 
 .catalog-header-info {
@@ -58,12 +58,12 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--color-texto-suave);
 }
 
 .sin-resultados {
   text-align: center;
-  color: #94a3b8;
+  color: var(--color-texto-suave);
   padding: 3rem 0;
   font-size: 0.95rem;
 }
@@ -76,8 +76,8 @@
 
 .btn-cargar-mas {
   background: #ffffff;
-  border: 1px solid #00d1a0;
-  color: #00a881;
+  border: 1px solid var(--color-marca);
+  color: var(--color-marca-texto);
   padding: 0.7rem 2rem;
   border-radius: 50px;
   font-weight: 700;
@@ -87,7 +87,7 @@
 }
 
 .btn-cargar-mas:hover {
-  background-color: #e6faf5;
+  background-color: var(--color-marca-suave);
 }
 
 @media (max-width: 600px) {

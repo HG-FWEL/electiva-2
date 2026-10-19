@@ -19,7 +19,7 @@
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.75rem;
-  color: #cbd5e1;
+  color: var(--color-borde-fuerte);
   background: rgba(15, 23, 42, 0.55);
   padding: 4px 10px;
   border-radius: 999px;

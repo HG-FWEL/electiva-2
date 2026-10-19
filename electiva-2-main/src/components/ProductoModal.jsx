@@ -1,14 +1,19 @@
 // src/components/ProductoModal.jsx
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { handleImgError } from '../utils/placeholder';
 import { formatPrecioCOP } from '../utils/precio';
+import SelectorCantidad from './SelectorCantidad';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart as faHeartLleno, faCartPlus, faBolt, faCheck, faXmark, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faHeart } from '@fortawesome/free-regular-svg-icons';
 import './ProductoModal.css';
 
 function ProductoModal({ producto, onClose }) {
-  const { agregarAlCarrito, abrirCarrito, estaEnFavoritos, alternarFavorito } = useCart();
+  const { agregarAlCarrito, estaEnFavoritos, alternarFavorito } = useCart();
+  const navigate = useNavigate();
   const [agregado, setAgregado] = useState(false);
   const [cantidad, setCantidad] = useState(1);
 
@@ -36,14 +41,14 @@ function ProductoModal({ producto, onClose }) {
   const handleComprarAhora = () => {
     agregarAlCarrito(producto, cantidad);
     onClose();
-    abrirCarrito();
+    navigate('/checkout');
   };
 
   return (
     <div className="producto-modal-overlay" onClick={onClose}>
       <div className="producto-modal" onClick={(e) => e.stopPropagation()}>
         <button type="button" className="producto-modal-close" onClick={onClose} aria-label="Cerrar">
-          ✕
+          <FontAwesomeIcon icon={faXmark} />
         </button>
 
         <div className="producto-modal-imagen">
@@ -57,9 +62,10 @@ function ProductoModal({ producto, onClose }) {
               type="button"
               className={`producto-modal-favorito ${favorito ? 'activo' : ''}`}
               onClick={() => alternarFavorito(producto)}
-              aria-label={favorito ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+              aria-pressed={favorito}
             >
-              {favorito ? '❤️ En favoritos' : '🤍 Agregar a favoritos'}
+              <FontAwesomeIcon icon={favorito ? faHeartLleno : faHeart} />
+              {favorito ? 'En favoritos' : 'Agregar a favoritos'}
             </button>
           </div>
 
@@ -86,30 +92,27 @@ function ProductoModal({ producto, onClose }) {
           {!sinStock && (
             <div className="producto-modal-cantidad">
               <span>Cantidad:</span>
-              <div className="cantidad-controles">
-                <button type="button" onClick={() => setCantidad((c) => Math.max(1, c - 1))}>-</button>
-                <span>{cantidad}</span>
-                <button
-                  type="button"
-                  onClick={() => setCantidad((c) => (stockDisponible ? Math.min(stockDisponible, c + 1) : c + 1))}
-                >
-                  +
-                </button>
-              </div>
+              <SelectorCantidad cantidad={cantidad} max={stockDisponible ?? undefined} onCambiar={setCantidad} />
             </div>
           )}
 
           <div className="producto-modal-acciones">
             <button type="button" className="btn-agregar" onClick={handleAgregarAlCarrito} disabled={sinStock}>
-              {sinStock ? 'Sin stock' : agregado ? 'Agregado ✓' : 'Agregar al carrito 🛒'}
+              {sinStock ? (
+                'Sin stock'
+              ) : agregado ? (
+                <><FontAwesomeIcon icon={faCheck} /> Agregado</>
+              ) : (
+                <><FontAwesomeIcon icon={faCartPlus} /> Agregar al carrito</>
+              )}
             </button>
             <button type="button" className="btn-comprar-ahora" onClick={handleComprarAhora} disabled={sinStock}>
-              Comprar ahora ⚡
+              <FontAwesomeIcon icon={faBolt} /> Comprar ahora
             </button>
           </div>
 
           <Link to={`/producto/${producto.id}`} className="producto-modal-ficha" onClick={onClose}>
-            Ver ficha completa del producto →
+            Ver ficha completa del producto <FontAwesomeIcon icon={faArrowRight} />
           </Link>
 
           <p className="producto-modal-hint">

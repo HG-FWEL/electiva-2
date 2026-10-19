@@ -79,11 +79,13 @@ function Login() {
           ¿No tienes cuenta? <Link to="/registro">Crea una aquí</Link>
         </p>
 
-        <div className="auth-aviso-admin">
-          <strong>Cuenta de administrador de prueba:</strong><br />
-          Usuario: admin@movimarket.com<br />
-          Contraseña: Admin123!
-        </div>
+        {/* Solo en desarrollo (npm run dev): en la versión publicada no se muestra */}
+        {import.meta.env.DEV && (
+          <div className="auth-aviso-admin">
+            <strong>Cuenta de administrador:</strong> la definen <code>ADMIN_EMAIL</code> y{' '}
+            <code>ADMIN_PASSWORD</code> en <code>backend/.env</code> (por defecto admin@movimarket.com / Admin123!).
+          </div>
+        )}
       </div>
     </div>
   );

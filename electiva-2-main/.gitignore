@@ -25,3 +25,11 @@ dist-ssr
 # Variables de entorno (claves secretas)
 .env
 .env.*
+# Plantillas sin secretos: sí se suben
+!.env.example
+# Datos que escribe el backend (catálogo editado y pedidos con datos de clientes)
+backend/datos/productos.json
+backend/datos/pedidos.json
+backend/datos/*.tmp
+backend/uploads/
+backend/datos/usuarios.json
