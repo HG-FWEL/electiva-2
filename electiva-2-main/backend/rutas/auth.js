@@ -1,5 +1,10 @@
 const express = require('express');
-const { leerUsuarios, guardarUsuarios } = require('../almacen');
+const {
+  buscarUsuarioPorEmail,
+  crearUsuario,
+  activarCuentaInvitado,
+  registrarInicioSesion,
+} = require('../almacen');
 const {
   usuarioPublico,
   crearToken,
@@ -45,7 +50,7 @@ const HASH_FICTICIO = require('bcryptjs').hashSync('cuenta-inexistente', 10);
  *       properties:
  *         token:
  *           type: string
- *           description: JWT para enviar en "Authorization: Bearer <token>"
+ *           description: 'JWT para enviar en "Authorization: Bearer <token>"'
  *         usuario:
  *           $ref: '#/components/schemas/Usuario'
  */
@@ -99,20 +104,17 @@ router.post('/registro', async (req, res) => {
   }
 
   const emailNormalizado = email.trim().toLowerCase();
-  const usuarios = leerUsuarios();
-  if (usuarios.some((u) => u.email === emailNormalizado)) {
+  const existente = await buscarUsuarioPorEmail(emailNormalizado);
+  // Quien compró como invitado ya tiene una cuenta sin contraseña: registrarse la activa.
+  if (existente && existente.passwordHash) {
     return res.status(409).json({ error: 'Ya existe una cuenta registrada con ese correo' });
   }
 
-  const usuario = {
-    id: `user-${Date.now()}`,
-    nombre: nombre.trim(),
-    email: emailNormalizado,
-    passwordHash: await cifrarPassword(password),
-    rol: 'cliente',
-    creado: new Date().toISOString(),
-  };
-  guardarUsuarios([...leerUsuarios(), usuario]);
+  const datos = { nombre: nombre.trim(), passwordHash: await cifrarPassword(password) };
+  const usuario = existente
+    ? await activarCuentaInvitado(existente.id, datos)
+    : await crearUsuario({ ...datos, email: emailNormalizado });
+  if (!usuario) return res.status(409).json({ error: 'Ya existe una cuenta registrada con ese correo' });
   res.status(201).json({ token: crearToken(usuario), usuario: usuarioPublico(usuario) });
 });
 
@@ -153,11 +155,14 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Ingresa tu correo y tu contraseña' });
   }
 
-  const usuario = leerUsuarios().find((u) => u.email === email.trim().toLowerCase());
+  const usuario = await buscarUsuarioPorEmail(email.trim().toLowerCase());
   const coincide = await compararPassword(password, usuario?.passwordHash ?? HASH_FICTICIO);
-  // Mismo mensaje para correo inexistente y contraseña errada.
-  if (!usuario || !coincide) return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+  // Mismo mensaje para correo inexistente, cuenta de invitado o desactivada y contraseña errada.
+  if (!usuario || !usuario.passwordHash || !usuario.activo || !coincide) {
+    return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+  }
 
+  await registrarInicioSesion(usuario.id);
   res.json({ token: crearToken(usuario), usuario: usuarioPublico(usuario) });
 });
 

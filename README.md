@@ -52,6 +52,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** y
 | Íconos | [Font Awesome](https://fontawesome.com/) |
 | Linter | [Oxlint](https://oxc.rs/) |
 | Backend | [Express 5](https://expressjs.com/) |
+| Base de datos | [Supabase](https://supabase.com/) (PostgreSQL) con `@supabase/supabase-js` |
 | Documentación de la API | [Swagger](https://swagger.io/) (`swagger-jsdoc` + `swagger-ui-express`) |
 | Autenticación | [bcryptjs](https://github.com/dcodeIO/bcrypt.js), [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) |
 | Subida de imágenes | [Multer](https://github.com/expressjs/multer) |
@@ -78,15 +79,20 @@ backend/
 ├── backend.js               ← punto de entrada: monta las rutas y Swagger
 ├── swagger.js               ← configuración de la documentación
 ├── auth.js                  ← bcrypt, JWT y middlewares requiereSesion / requiereAdmin
-├── almacen.js               ← lectura y escritura de los archivos JSON
+├── supabase.js              ← cliente de Supabase con la llave secreta
+├── almacen.js               ← lectura y escritura de los datos en Supabase
 ├── wompi.js                 ← firma de integridad y consulta de transacciones
 ├── rutas/
 │   ├── auth.js              ← registro, login y sesión actual
 │   ├── productos.js         ← catálogo (CRUD)
 │   ├── imagenes.js          ← subida de imágenes de productos
 │   └── pedidos.js           ← pedidos, pago con Wompi y estado de envío
+├── supabase/
+│   └── migracion-tienda.sql ← columnas y funciones SQL que necesita el backend
+├── scripts/
+│   └── migrar-json-a-supabase.js ← pasa a Supabase los datos de los antiguos JSON
 ├── datos/
-│   └── productos-iniciales.json  ← catálogo base (los demás JSON se crean al usar la app)
+│   └── productos-iniciales.json  ← catálogo base de antes de Supabase (lo usa el script)
 └── .env.example             ← plantilla de variables del backend
 ```
 
@@ -149,6 +155,11 @@ cd backend && npm install && cd ..
 cp .env.example .env
 cp backend/.env.example backend/.env
 #    …y completar los valores (ver la sección "Variables de entorno")
+
+# 4. Solo la primera vez, con una base de datos de Supabase nueva:
+#    a) En Supabase → SQL Editor, ejecutar backend/supabase/migracion-tienda.sql
+#    b) Cargar el catálogo inicial:
+cd backend && node scripts/migrar-json-a-supabase.js && cd ..
 ```
 
 Luego, en **dos terminales**:
@@ -165,7 +176,7 @@ npm run dev
 
 Abre `http://localhost:5173` para la tienda y `http://localhost:4000/api-docs` para la documentación de la API.
 
-> El backend debe estar encendido: el catálogo, el inicio de sesión y los pagos dependen de él.
+> El backend debe estar encendido: el catálogo, el inicio de sesión y los pagos dependen de él. Los datos viven en Supabase, así que también necesita internet.
 
 ## 🔑 Variables de entorno
 
@@ -187,6 +198,8 @@ Los archivos `.env` **no se suben al repositorio** (contienen claves). Usa las p
 | `WOMPI_API_URL` | Opcional. Por defecto el sandbox (`https://sandbox.wompi.co/v1`). |
 | `JWT_SECRET` | Clave para firmar las sesiones (mínimo 32 caracteres). **Sin ella el backend no arranca.** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta de administrador que se crea en el primer arranque. |
+| `SUPABASE_URL` | Dirección del proyecto de Supabase. |
+| `SUPABASE_SECRET_KEY` | Llave secreta (`sb_secret_…`). Salta las reglas de seguridad de la base de datos: **solo va en el `.env` del backend**. |
 
 ## 📜 Scripts disponibles
 
@@ -252,21 +265,25 @@ En modo pruebas (llaves `pub_test_…`) no se cobra dinero real. Usa la tarjeta 
 La cuenta de administrador se crea automáticamente la primera vez que arranca el backend, con los valores de `ADMIN_EMAIL` y `ADMIN_PASSWORD` del archivo `backend/.env`.
 
 - Las contraseñas se guardan cifradas con **bcrypt**; nunca en texto plano ni en el código del frontend.
-- Para cambiar la contraseña del administrador: edita `backend/.env`, borra su entrada en `backend/datos/usuarios.json` y reinicia el backend.
+- Para cambiar la contraseña del administrador: edita `backend/.env`, borra su fila en la tabla `usuarios` de Supabase y reinicia el backend.
 - Mientras desarrollas (`npm run dev`), la pantalla de login recuerda dónde está configurada la cuenta; en el build de producción ese aviso no aparece.
 
 ## 💾 Persistencia de datos
 
-**En el backend** (`electiva-2-main/backend/`, no se suben al repositorio):
+**En Supabase** (base de datos PostgreSQL). El backend se conecta con la llave secreta; el navegador nunca habla directo con estas tablas.
 
-| Archivo | Contenido |
-|---------|-----------|
-| `datos/productos.json` | Catálogo con los cambios del administrador (se crea a partir de `productos-iniciales.json`) |
-| `datos/pedidos.json` | Pedidos, datos de envío y estado del pago |
-| `datos/usuarios.json` | Cuentas de usuario (contraseñas cifradas) |
-| `uploads/` | Imágenes subidas desde el panel de administración |
+| Datos | Tablas |
+|-------|--------|
+| Catálogo | `productos`, `variantes_producto` (stock), `imagenes_producto`, `especificaciones_tecnicas`, `categorias`, `marcas`, `modelos` |
+| Pedidos | `pedidos`, `detalles_pedido`, `pagos`, `historial_estados_pedido` |
+| Usuarios | `usuarios` (contraseñas cifradas; `rol_id` 2 = administrador) |
 
-Para volver al catálogo original, detén el backend y borra `datos/productos.json`.
+- El `id` de un producto en la API es su `sku`.
+- Eliminar un producto desde el panel lo **desactiva** (`activo = false`), porque los pedidos lo referencian.
+- La tienda solo vende las variantes **sin recargo** (`precio_adicional = 0`): así se cobra siempre el precio que se muestra.
+- Quien compra sin iniciar sesión queda con una cuenta de invitado sin contraseña; si luego se registra con ese correo, la cuenta se activa.
+
+**En el backend** (`electiva-2-main/backend/uploads/`, no se sube al repositorio): imágenes subidas desde el panel de administración.
 
 **En el navegador** (`localStorage`):
 
@@ -298,7 +315,9 @@ Para agregar un modelo a otro producto, copia el `.fbx` (y su carpeta de textura
 - [x] Registro e inicio de sesión con bcrypt y JWT; rutas de administrador protegidas
 - [x] Panel de administración de productos (con subida de imágenes) y pedidos
 - [x] Visor 3D del iPhone 15
-- [ ] Mover los datos de archivos JSON a una base de datos
+- [x] Datos en una base de datos (Supabase)
+- [ ] Selector de variantes (color, capacidad) en la tienda
+- [ ] Subir las imágenes a Supabase Storage en vez del disco del backend
 - [ ] Notificaciones de Wompi por webhook (hoy un pago pendiente se verifica desde el panel)
 - [ ] Límite de intentos de inicio de sesión
 - [ ] Página "Mis pedidos" para los clientes

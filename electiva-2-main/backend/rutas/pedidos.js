@@ -1,8 +1,16 @@
 const express = require('express');
-const { leerProductos, guardarProductos, leerPedidos, guardarPedidos } = require('../almacen');
+const {
+  buscarUsuarioPorEmail,
+  crearUsuario,
+  listarPedidos,
+  obtenerPedido,
+  crearPedido,
+  registrarPago,
+  cambiarEstadoEnvio,
+} = require('../almacen');
 const { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion } = require('../wompi');
 
-const { requiereAdmin } = require('../auth');
+const { requiereAdmin, sesionOpcional } = require('../auth');
 
 const router = express.Router();
 
@@ -40,15 +48,16 @@ function generarReferencia() {
   return `MM-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
-// Resta del stock lo vendido en un pedido aprobado (una sola vez por pedido).
-function descontarStock(pedido) {
-  const productos = leerProductos();
-  for (const item of pedido.items) {
-    const producto = productos.find((p) => p.id === item.id);
-    if (producto) producto.stock = Math.max(0, producto.stock - item.cantidad);
-  }
-  guardarProductos(productos);
-  pedido.stockDescontado = true;
+// Todo pedido pertenece a un usuario (así lo exige la tabla pedidos). Quien
+// compra sin sesión queda con una cuenta de invitado por su correo, que luego
+// puede activar registrándose con ese mismo correo.
+async function usuarioDelPedido(sesion, cliente) {
+  if (sesion) return sesion.id;
+  const email = cliente.email.trim().toLowerCase();
+  const existente = await buscarUsuarioPorEmail(email);
+  if (existente) return existente.id;
+  const invitado = await crearUsuario({ nombre: cliente.nombre.trim(), email, passwordHash: null });
+  return invitado.id;
 }
 
 /**
@@ -241,14 +250,14 @@ function descontarStock(pedido) {
  *       409:
  *         description: No hay stock suficiente
  */
-router.get('/', requiereAdmin, (req, res) => {
+router.get('/', requiereAdmin, async (req, res) => {
   const filtro = req.query.estadoPago ? String(req.query.estadoPago).split(',') : null;
-  const pedidos = leerPedidos();
+  const pedidos = await listarPedidos();
   res.json(filtro ? pedidos.filter((p) => filtro.includes(p.pago.estado)) : pedidos);
 });
 
-router.post('/', (req, res) => {
-  const { items, metodoEnvio, cliente, usuario } = req.body ?? {};
+router.post('/', sesionOpcional, async (req, res) => {
+  const { items, metodoEnvio, cliente } = req.body ?? {};
 
   if (!(metodoEnvio in COSTOS_ENVIO)) return res.status(400).json({ error: 'metodoEnvio debe ser estandar o express' });
   const errorCliente = validarCliente(cliente);
@@ -256,49 +265,28 @@ router.post('/', (req, res) => {
   const { cantidades, error } = agruparItems(items);
   if (error) return res.status(400).json({ error });
 
-  const catalogo = leerProductos();
-  const itemsPedido = [];
-  for (const [id, cantidad] of cantidades) {
-    const producto = catalogo.find((p) => p.id === id);
-    if (!producto) return res.status(400).json({ error: `El producto ${id} no existe` });
-    if (producto.stock < cantidad) {
-      return res.status(409).json({ error: `Solo quedan ${producto.stock} unidades de ${producto.nombre}` });
-    }
-    itemsPedido.push({ id, nombre: producto.nombre, imagen: producto.imagen, precio: producto.precio, cantidad });
-  }
-
-  const subtotal = itemsPedido.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
-  const costoEnvio = COSTOS_ENVIO[metodoEnvio];
-  const total = Math.round(subtotal + costoEnvio);
-  const montoCentavos = total * 100;
-
-  const pedido = {
+  // La base de datos toma los precios de su catálogo y revisa el stock
+  // (responde 400 si un producto no existe y 409 si no alcanza el stock).
+  const pedido = await crearPedido({
     referencia: generarReferencia(),
-    fecha: new Date().toISOString(),
+    usuarioId: await usuarioDelPedido(req.usuario, cliente),
     cliente: {
       ...Object.fromEntries(CAMPOS_CLIENTE.map((campo) => [campo, cliente[campo].trim()])),
       notas: typeof cliente.notas === 'string' ? cliente.notas.trim() : '',
     },
-    usuario: usuario && typeof usuario === 'object' ? { id: usuario.id, nombre: usuario.nombre, email: usuario.email } : null,
+    usuario: req.usuario ? { id: req.usuario.id, nombre: req.usuario.nombre, email: req.usuario.email } : null,
     metodoEnvio,
-    items: itemsPedido,
-    subtotal,
-    costoEnvio,
-    total,
-    montoCentavos,
-    pago: { estado: 'iniciado', transaccionId: null, verificadoEn: null },
-    envio: { estado: 'revision', fecha: null },
-    stockDescontado: false,
-  };
+    costoEnvio: COSTOS_ENVIO[metodoEnvio],
+    items: [...cantidades].map(([id, cantidad]) => ({ id, cantidad })),
+  });
 
-  guardarPedidos([pedido, ...leerPedidos()]);
   res.status(201).json({
     pedido,
     pago: {
       referencia: pedido.referencia,
-      montoCentavos,
+      montoCentavos: pedido.montoCentavos,
       moneda: MONEDA,
-      firma: firmaIntegridad(pedido.referencia, montoCentavos, MONEDA),
+      firma: firmaIntegridad(pedido.referencia, pedido.montoCentavos, MONEDA),
     },
   });
 });
@@ -331,8 +319,8 @@ router.post('/', (req, res) => {
  *       404:
  *         description: No existe un pedido con esa referencia
  */
-router.get('/:referencia', requiereAdmin, (req, res) => {
-  const pedido = leerPedidos().find((p) => p.referencia === req.params.referencia);
+router.get('/:referencia', requiereAdmin, async (req, res) => {
+  const pedido = await obtenerPedido(req.params.referencia);
   if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
   res.json(pedido);
 });
@@ -386,7 +374,7 @@ router.post('/:referencia/confirmar', async (req, res) => {
     return res.status(400).json({ error: 'Se requiere transaccionId' });
   }
 
-  const pedidoActual = leerPedidos().find((p) => p.referencia === req.params.referencia);
+  const pedidoActual = await obtenerPedido(req.params.referencia);
   if (!pedidoActual) return res.status(404).json({ error: 'Pedido no encontrado' });
   if (pedidoActual.pago.estado === 'aprobado' && pedidoActual.pago.transaccionId !== transaccionId) {
     return res.status(409).json({ error: 'Este pedido ya fue pagado con otra transacción' });
@@ -407,17 +395,13 @@ router.post('/:referencia/confirmar', async (req, res) => {
     return res.status(400).json({ error: 'La transacción de Wompi no corresponde a este pedido' });
   }
 
-  // Se vuelve a leer después de esperar a Wompi para no pisar cambios hechos mientras tanto.
-  const pedidos = leerPedidos();
-  const pedido = pedidos.find((p) => p.referencia === pedidoActual.referencia);
-  pedido.pago = {
-    estado: ESTADOS_WOMPI[transaccion.status] ?? 'pendiente',
+  // La función SQL bloquea el pedido mientras guarda el pago, así dos
+  // confirmaciones simultáneas no descuentan el stock dos veces.
+  const pedido = await registrarPago(pedidoActual.referencia, {
     transaccionId,
-    verificadoEn: new Date().toISOString(),
-  };
-  if (pedido.pago.estado === 'aprobado' && !pedido.stockDescontado) descontarStock(pedido);
-
-  guardarPedidos(pedidos);
+    estado: ESTADOS_WOMPI[transaccion.status] ?? 'pendiente',
+    respuesta: { estadoWompi: transaccion.status, metodo: transaccion.payment_method_type ?? null },
+  });
   res.json(pedido);
 });
 
@@ -464,22 +448,20 @@ router.post('/:referencia/confirmar', async (req, res) => {
  *       409:
  *         description: El pago del pedido no está aprobado
  */
-router.patch('/:referencia/envio', requiereAdmin, (req, res) => {
+router.patch('/:referencia/envio', requiereAdmin, async (req, res) => {
   const { estado } = req.body ?? {};
   if (estado !== 'revision' && estado !== 'enviado') {
     return res.status(400).json({ error: 'estado debe ser revision o enviado' });
   }
 
-  const pedidos = leerPedidos();
-  const pedido = pedidos.find((p) => p.referencia === req.params.referencia);
+  const pedido = await obtenerPedido(req.params.referencia);
   if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
-  if (estado === 'enviado' && pedido.pago.estado !== 'aprobado') {
-    return res.status(409).json({ error: 'Solo se pueden enviar pedidos con el pago aprobado' });
+  // La tabla pedidos solo admite "pagado"/"enviado" con un pago aprobado.
+  if (pedido.pago.estado !== 'aprobado') {
+    return res.status(409).json({ error: 'Solo se pueden gestionar envíos de pedidos con el pago aprobado' });
   }
 
-  pedido.envio = { estado, fecha: estado === 'enviado' ? new Date().toISOString() : null };
-  guardarPedidos(pedidos);
-  res.json(pedido);
+  res.json(await cambiarEstadoEnvio(pedido.referencia, estado));
 });
 
 module.exports = router;
