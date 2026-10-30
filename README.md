@@ -33,6 +33,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** y
 - **Detalle de producto** con selector de cantidad y visor **3D** (rotar, acercar y alejar) para los productos que tienen modelo.
 - **Carrito** sincronizado con el catálogo: si un precio o el stock cambian, el carrito se actualiza y avisa.
 - **Checkout** por secciones (envío, método de envío y pago) con validación por campo.
+- **Correos a clientes** por Gmail: confirmación cuando se aprueba el pago y aviso cuando el pedido se marca como enviado.
 - **Pago con Wompi**: el backend calcula el total desde su propio catálogo, firma el pago y **verifica la transacción con Wompi** antes de darla por pagada. Al aprobarse, descuenta el stock.
 - **Registro e inicio de sesión** en el backend: contraseñas cifradas con **bcrypt** y sesiones con **JWT**.
 - **Panel de administración** (solo administradores):
@@ -82,6 +83,7 @@ backend/
 ├── supabase.js              ← cliente de Supabase con la llave secreta
 ├── almacen.js               ← lectura y escritura de los datos en Supabase
 ├── wompi.js                 ← firma de integridad y consulta de transacciones
+├── correo.js                ← correos a clientes por Gmail (pedido confirmado y enviado)
 ├── rutas/
 │   ├── auth.js              ← registro, login y sesión actual
 │   ├── productos.js         ← catálogo (CRUD)
@@ -199,6 +201,7 @@ Los archivos `.env` **no se suben al repositorio** (contienen claves). Usa las p
 | `JWT_SECRET` | Clave para firmar las sesiones (mínimo 32 caracteres). **Sin ella el backend no arranca.** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta de administrador que se crea en el primer arranque. |
 | `SUPABASE_URL` | Dirección del proyecto de Supabase. |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Opcionales. Cuenta de Gmail y su [contraseña de aplicación](https://myaccount.google.com/apppasswords) para enviar los correos de pedido confirmado y pedido enviado. Sin ellas no se envían correos. |
 | `SUPABASE_SECRET_KEY` | Llave secreta (`sb_secret_…`). Salta las reglas de seguridad de la base de datos: **solo va en el `.env` del backend**. |
 
 ## 📜 Scripts disponibles
