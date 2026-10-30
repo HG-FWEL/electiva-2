@@ -9,6 +9,7 @@ const {
   cambiarEstadoEnvio,
 } = require('../almacen');
 const { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion } = require('../wompi');
+const { avisarPedidoConfirmado, avisarPedidoEnviado } = require('../correo');
 
 const { requiereAdmin, sesionOpcional } = require('../auth');
 
@@ -402,6 +403,8 @@ router.post('/:referencia/confirmar', async (req, res) => {
     estado: ESTADOS_WOMPI[transaccion.status] ?? 'pendiente',
     respuesta: { estadoWompi: transaccion.status, metodo: transaccion.payment_method_type ?? null },
   });
+  // Solo la primera vez que el pago queda aprobado: verificar de nuevo no repite el correo.
+  if (pedidoActual.pago.estado !== 'aprobado' && pedido.pago.estado === 'aprobado') avisarPedidoConfirmado(pedido);
   res.json(pedido);
 });
 
@@ -461,7 +464,10 @@ router.patch('/:referencia/envio', requiereAdmin, async (req, res) => {
     return res.status(409).json({ error: 'Solo se pueden gestionar envíos de pedidos con el pago aprobado' });
   }
 
-  res.json(await cambiarEstadoEnvio(pedido.referencia, estado));
+  const actualizado = await cambiarEstadoEnvio(pedido.referencia, estado);
+  // Solo al pasar a "enviado": marcarlo de nuevo no repite el correo.
+  if (pedido.envio.estado !== 'enviado' && actualizado.envio.estado === 'enviado') avisarPedidoEnviado(actualizado);
+  res.json(actualizado);
 });
 
 module.exports = router;
