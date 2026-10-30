@@ -1,6 +1,6 @@
 # MóvilMarket 🛒📱
 
-Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** y un backend en **Express**, como proyecto de la asignatura **Electiva 2**. Permite explorar productos por categoría, verlos en detalle (incluido un **modelo 3D interactivo del iPhone 15**), guardarlos en favoritos, comprarlos con pago real de pruebas a través de **Wompi** y administrarlos desde un panel para administradores.
+Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, un backend en **Express** y una base de datos en **Supabase**, como proyecto de la asignatura **Electiva 2**. Permite explorar productos por categoría, verlos en detalle (incluido un **modelo 3D interactivo del iPhone 15**), guardarlos en favoritos, comprarlos con pago real de pruebas a través de **Wompi**, recibir correos del estado del pedido y administrar todo desde un panel para administradores.
 
 ---
 
@@ -17,18 +17,19 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** y
 9. [Rutas de la aplicación](#-rutas-de-la-aplicación)
 10. [API del backend](#-api-del-backend)
 11. [Pagos con Wompi](#-pagos-con-wompi)
-12. [Usuario administrador](#-usuario-administrador)
-13. [Persistencia de datos](#-persistencia-de-datos)
-14. [Modelo 3D](#-modelo-3d)
-15. [Estado actual y pendientes](#-estado-actual-y-pendientes)
+12. [Correos a clientes](#-correos-a-clientes)
+13. [Usuario administrador](#-usuario-administrador)
+14. [Persistencia de datos](#-persistencia-de-datos)
+15. [Modelo 3D](#-modelo-3d)
+16. [Estado actual y pendientes](#-estado-actual-y-pendientes)
 
 ---
 
 ## ✨ Características
 
-- **Catálogo de 64 productos** en 9 categorías (celulares, computadores, escritorio, all‑in‑one, gaming, consolas, tablets, Apple Watch y accesorios), servido por el backend. Precios en **pesos colombianos (COP)**.
+- **Catálogo de más de 80 productos** en 9 categorías (celulares, computadores, escritorio, all‑in‑one, gaming, consolas, tablets, Apple Watch y accesorios), guardado en Supabase y servido por el backend. Precios en **pesos colombianos (COP)**.
 - **Inicio y vitrina de productos** con datos reales del catálogo: cantidad de productos y precio "desde" por categoría, destacados y "últimas unidades".
-- **Páginas de categoría** con filtro por marca, búsqueda y orden por precio o nombre.
+- **Páginas de categoría** con filtro por marca (o por línea, cuando todos son de la misma marca), búsqueda y orden por precio o nombre.
 - **Buscador** en la barra de navegación con página de resultados.
 - **Detalle de producto** con selector de cantidad y visor **3D** (rotar, acercar y alejar) para los productos que tienen modelo.
 - **Carrito** sincronizado con el catálogo: si un precio o el stock cambian, el carrito se actualiza y avisa.
@@ -37,7 +38,8 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** y
 - **Pago con Wompi**: el backend calcula el total desde su propio catálogo, firma el pago y **verifica la transacción con Wompi** antes de darla por pagada. Al aprobarse, descuenta el stock.
 - **Registro e inicio de sesión** en el backend: contraseñas cifradas con **bcrypt** y sesiones con **JWT**.
 - **Panel de administración** (solo administradores):
-  - Crear, editar y eliminar productos con vista previa en vivo y subida de imágenes.
+  - Productos organizados **por categoría**: botones para filtrar, secciones plegables y avisos de stock bajo y agotado. Buscador por nombre, marca o categoría.
+  - Crear, editar y desactivar productos con vista previa en vivo y subida de imágenes.
   - Ver los pedidos pagados, verificar pagos pendientes con Wompi y marcarlos como enviados.
 - **Documentación de la API con Swagger** en `http://localhost:4000/api-docs`.
 - Diseño adaptable a celular y colores con contraste accesible (WCAG AA).
@@ -58,6 +60,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** y
 | Autenticación | [bcryptjs](https://github.com/dcodeIO/bcrypt.js), [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) |
 | Subida de imágenes | [Multer](https://github.com/expressjs/multer) |
 | Pagos | [Wompi](https://docs.wompi.co/) (widget de checkout) |
+| Correos | [Nodemailer](https://nodemailer.com/) con Gmail |
 
 ## 📂 Estructura del repositorio
 
@@ -65,6 +68,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite** y
 electiva-2/
 ├── README.md                  ← este archivo
 └── electiva-2-main/           ← proyecto
+    ├── .claude/skills/        ← Agent Skills de Supabase para Claude Code
     ├── backend/               ← API en Express (puerto 4000)
     ├── iphone-15/             ← recursos originales del modelo 3D (ZIP + texturas)
     ├── public/                ← archivos estáticos (imágenes, modelos 3D)
@@ -133,7 +137,8 @@ src/
     ├── categorias.js        ← resumen de cada categoría a partir del catálogo
     ├── migrarPreciosCOP.js  ← convierte a pesos los datos guardados en versiones anteriores
     ├── precio.js            ← formato de precios en COP
-    └── placeholder.js       ← imagen por defecto para productos sin foto
+    ├── placeholder.js       ← imagen por defecto para productos sin foto
+    └── supabase.js          ← cliente de Supabase con la llave publicable (preparado; hoy todo pasa por el backend)
 ```
 
 ## ✅ Requisitos previos
@@ -158,7 +163,8 @@ cp .env.example .env
 cp backend/.env.example backend/.env
 #    …y completar los valores (ver la sección "Variables de entorno")
 
-# 4. Solo la primera vez, con una base de datos de Supabase nueva:
+# 4. Solo si montas una base de datos de Supabase NUEVA. La del equipo ya está lista:
+#    en ese caso basta con poner SUPABASE_URL y SUPABASE_SECRET_KEY en backend/.env
 #    a) En Supabase → SQL Editor, ejecutar backend/supabase/migracion-tienda.sql
 #    b) Cargar el catálogo inicial:
 cd backend && node scripts/migrar-json-a-supabase.js && cd ..
@@ -190,6 +196,7 @@ Los archivos `.env` **no se suben al repositorio** (contienen claves). Usa las p
 |----------|-------------|
 | `VITE_API_URL` | Dirección del backend (por defecto `http://localhost:4000`). |
 | `VITE_WOMPI_PUBLIC_KEY` | Llave pública de Wompi (`pub_test_…` en modo pruebas). |
+| `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` | Opcionales. Dirección y llave **publicable** de Supabase para `src/utils/supabase.js` (hoy no se usan: todo pasa por el backend). |
 
 **Backend — `electiva-2-main/backend/.env`**
 
@@ -201,8 +208,8 @@ Los archivos `.env` **no se suben al repositorio** (contienen claves). Usa las p
 | `JWT_SECRET` | Clave para firmar las sesiones (mínimo 32 caracteres). **Sin ella el backend no arranca.** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta de administrador que se crea en el primer arranque. |
 | `SUPABASE_URL` | Dirección del proyecto de Supabase. |
-| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Opcionales. Cuenta de Gmail y su [contraseña de aplicación](https://myaccount.google.com/apppasswords) para enviar los correos de pedido confirmado y pedido enviado. Sin ellas no se envían correos. |
 | `SUPABASE_SECRET_KEY` | Llave secreta (`sb_secret_…`). Salta las reglas de seguridad de la base de datos: **solo va en el `.env` del backend**. |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Opcionales. Cuenta de Gmail y su [contraseña de aplicación](https://myaccount.google.com/apppasswords) para enviar los correos a clientes. Sin ellas la tienda funciona igual, pero no envía correos. |
 
 ## 📜 Scripts disponibles
 
@@ -245,13 +252,13 @@ Documentación interactiva: **`http://localhost:4000/api-docs`**. Para probar la
 | `GET` | `/api/productos/:id` | Público | Un producto |
 | `POST` | `/api/productos` | Admin | Crea un producto |
 | `PUT` | `/api/productos/:id` | Admin | Actualiza un producto |
-| `DELETE` | `/api/productos/:id` | Admin | Elimina un producto |
+| `DELETE` | `/api/productos/:id` | Admin | Desactiva un producto (deja de verse en la tienda) |
 | `POST` | `/api/imagenes` | Admin | Sube una imagen (JPG, PNG o WebP, máximo 5 MB) |
-| `POST` | `/api/pedidos` | Público | Crea un pedido y devuelve la firma para pagarlo |
-| `POST` | `/api/pedidos/:referencia/confirmar` | Público | Verifica el pago con Wompi |
+| `POST` | `/api/pedidos` | Público | Crea un pedido y devuelve la firma para pagarlo (con sesión, queda a nombre del usuario) |
+| `POST` | `/api/pedidos/:referencia/confirmar` | Público | Verifica el pago con Wompi; si queda aprobado, envía el correo de confirmación |
 | `GET` | `/api/pedidos` | Admin | Lista los pedidos (filtro `?estadoPago=aprobado,pendiente`) |
 | `GET` | `/api/pedidos/:referencia` | Admin | Consulta un pedido |
-| `PATCH` | `/api/pedidos/:referencia/envio` | Admin | Marca un pedido como enviado o en revisión |
+| `PATCH` | `/api/pedidos/:referencia/envio` | Admin | Marca un pedido como enviado (y avisa al cliente por correo) o en revisión |
 
 Las rutas de administrador responden **401** sin sesión y **403** si la sesión no es de administrador.
 
@@ -262,6 +269,23 @@ Las rutas de administrador responden **401** sin sesión y **403** si la sesión
 3. Al terminar, el backend **consulta la transacción a Wompi** y comprueba que la referencia, el monto y la moneda coincidan con el pedido. Si el pago queda aprobado, descuenta el stock una sola vez.
 
 En modo pruebas (llaves `pub_test_…`) no se cobra dinero real. Usa la tarjeta **`4242 4242 4242 4242`**, cualquier fecha futura y CVC **`123`**.
+
+## 📧 Correos a clientes
+
+La tienda envía correos por Gmail (`backend/correo.js`) a la dirección que el cliente escribe en el checkout:
+
+| Cuándo | Correo |
+|--------|--------|
+| El backend verifica con Wompi que el pago quedó **aprobado** | Confirmación con la referencia, los productos, el envío, el total y la dirección |
+| El administrador marca el pedido como **enviado** | Aviso de que el pedido va en camino |
+
+- Cada correo se envía **una sola vez**: volver a verificar un pago o marcarlo otra vez como enviado no lo repite.
+- Se envían en segundo plano: si Gmail falla, el pago y el panel siguen funcionando y el error queda en la consola del backend.
+- Para activarlos se necesita una **contraseña de aplicación** de Google (no la contraseña normal):
+  1. En [myaccount.google.com](https://myaccount.google.com) → **Seguridad**, activa la **Verificación en dos pasos**.
+  2. Entra a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), crea una con el nombre `MovilMarket` y copia las 16 letras.
+  3. Ponlas en `backend/.env` como `GMAIL_APP_PASSWORD` (sin espacios), junto con `GMAIL_USER`.
+- Recomendado: usar una cuenta de Gmail solo para la tienda, porque los clientes ven esa dirección como remitente.
 
 ## 🔐 Usuario administrador
 
@@ -316,13 +340,16 @@ Para agregar un modelo a otro producto, copia el `.fbx` (y su carpeta de textura
 - [x] Backend en Express con documentación Swagger
 - [x] Pagos con Wompi verificados por el backend
 - [x] Registro e inicio de sesión con bcrypt y JWT; rutas de administrador protegidas
-- [x] Panel de administración de productos (con subida de imágenes) y pedidos
+- [x] Panel de administración de productos (por categorías, con subida de imágenes) y pedidos
 - [x] Visor 3D del iPhone 15
 - [x] Datos en una base de datos (Supabase)
+- [x] Correos de pedido confirmado y pedido enviado
 - [ ] Selector de variantes (color, capacidad) en la tienda
 - [ ] Subir las imágenes a Supabase Storage en vez del disco del backend
 - [ ] Notificaciones de Wompi por webhook (hoy un pago pendiente se verifica desde el panel)
 - [ ] Límite de intentos de inicio de sesión
+- [ ] Verificación de correo al registrarse y recuperación de contraseña
+- [ ] Carrito y favoritos guardados en la cuenta (hoy viven en el navegador)
 - [ ] Página "Mis pedidos" para los clientes
 
 ---
