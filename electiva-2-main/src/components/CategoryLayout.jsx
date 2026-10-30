@@ -41,8 +41,9 @@ function CategoryLayout({
     [productos, categoriaSlug]
   );
 
-  // Detecta automáticamente si esta categoría se filtra por "marca" o por "linea"
-  const campoFiltro = productosCategoria.some((p) => p.marca)
+  // Detecta automáticamente si esta categoría se filtra por "marca" o por "linea".
+  // Si todos son de la misma marca (p. ej. Apple Watch), filtrar por marca no sirve.
+  const campoFiltro = new Set(productosCategoria.map((p) => p.marca).filter(Boolean)).size > 1
     ? 'marca'
     : productosCategoria.some((p) => p.linea)
       ? 'linea'

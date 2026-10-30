@@ -1,5 +1,11 @@
 const express = require('express');
-const { leerProductos, guardarProductos } = require('../almacen');
+const {
+  categoriaValida,
+  listarProductos,
+  obtenerProducto,
+  guardarProducto,
+  desactivarProducto,
+} = require('../almacen');
 
 const { requiereAdmin } = require('../auth');
 
@@ -21,6 +27,7 @@ function camposPermitidos(body) {
 function validarProducto(producto) {
   if (typeof producto.nombre !== 'string' || !producto.nombre) return 'El nombre es obligatorio';
   if (typeof producto.categoria !== 'string' || !producto.categoria) return 'La categoría es obligatoria';
+  if (!categoriaValida(producto.categoria)) return `La categoría ${producto.categoria} no existe`;
   if (typeof producto.precio !== 'number' || !Number.isFinite(producto.precio) || producto.precio < 0) {
     return 'El precio debe ser un número mayor o igual a 0 (en pesos colombianos)';
   }
@@ -29,6 +36,11 @@ function validarProducto(producto) {
   for (const campo of CAMPOS_TEXTO) {
     if (producto[campo] !== undefined && typeof producto[campo] !== 'string') return `El campo ${campo} debe ser texto`;
   }
+  // Límites de las columnas en Supabase.
+  if (producto.nombre.length > 150) return 'El nombre puede tener máximo 150 caracteres';
+  if (producto.imagen.length > 255) return 'La URL de la imagen puede tener máximo 255 caracteres';
+  if (producto.modelo3d && producto.modelo3d.length > 255) return 'La ruta del modelo 3D puede tener máximo 255 caracteres';
+  if (producto.marca && producto.marca.length > 100) return 'La marca puede tener máximo 100 caracteres';
   return null;
 }
 
@@ -125,17 +137,16 @@ function limpiarVacios(producto) {
  *       400:
  *         description: Datos inválidos
  */
-router.get('/', (req, res) => {
-  res.json(leerProductos());
+router.get('/', async (req, res) => {
+  res.json(await listarProductos());
 });
 
-router.post('/', requiereAdmin, (req, res) => {
+router.post('/', requiereAdmin, async (req, res) => {
   const producto = limpiarVacios({ id: `prod-${Date.now()}`, ...camposPermitidos(req.body ?? {}) });
   const error = validarProducto(producto);
   if (error) return res.status(400).json({ error });
 
-  guardarProductos([...leerProductos(), producto]);
-  res.status(201).json(producto);
+  res.status(201).json(await guardarProducto(producto));
 });
 
 /**
@@ -204,31 +215,26 @@ router.post('/', requiereAdmin, (req, res) => {
  *       404:
  *         description: No existe un producto con ese id
  */
-router.get('/:id', (req, res) => {
-  const producto = leerProductos().find((p) => p.id === req.params.id);
+router.get('/:id', async (req, res) => {
+  const producto = await obtenerProducto(req.params.id);
   if (!producto) return res.status(404).json({ error: 'Producto no encontrado' });
   res.json(producto);
 });
 
-router.put('/:id', requiereAdmin, (req, res) => {
-  const productos = leerProductos();
-  const indice = productos.findIndex((p) => p.id === req.params.id);
-  if (indice === -1) return res.status(404).json({ error: 'Producto no encontrado' });
+router.put('/:id', requiereAdmin, async (req, res) => {
+  const actual = await obtenerProducto(req.params.id);
+  if (!actual) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  const actualizado = limpiarVacios({ ...productos[indice], ...camposPermitidos(req.body ?? {}) });
+  const actualizado = limpiarVacios({ ...actual, ...camposPermitidos(req.body ?? {}) });
   const error = validarProducto(actualizado);
   if (error) return res.status(400).json({ error });
 
-  productos[indice] = actualizado;
-  guardarProductos(productos);
-  res.json(actualizado);
+  res.json(await guardarProducto(actualizado, actual));
 });
 
-router.delete('/:id', requiereAdmin, (req, res) => {
-  const productos = leerProductos();
-  if (!productos.some((p) => p.id === req.params.id)) return res.status(404).json({ error: 'Producto no encontrado' });
-
-  guardarProductos(productos.filter((p) => p.id !== req.params.id));
+// No se borra de la base de datos (los pedidos lo referencian): queda desactivado.
+router.delete('/:id', requiereAdmin, async (req, res) => {
+  if (!(await desactivarProducto(req.params.id))) return res.status(404).json({ error: 'Producto no encontrado' });
   res.status(204).end();
 });
 

@@ -8,6 +8,8 @@ import FormularioProducto from '../components/FormularioProducto';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { handleImgError } from '../utils/placeholder';
 import { formatPrecioCOP } from '../utils/precio';
+import { categorias } from '../data/Productos';
+import { ICONOS_CATEGORIA } from '../utils/categorias';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlus,
@@ -20,6 +22,8 @@ import {
   faMagnifyingGlass,
   faUserShield,
   faReceipt,
+  faChevronDown,
+  faBox,
 } from '@fortawesome/free-solid-svg-icons';
 import './Admin.css';
 
@@ -27,6 +31,24 @@ function estadoStock(stock) {
   if (stock <= 0) return { texto: 'Agotado', clase: 'stock-agotado' };
   if (stock <= 3) return { texto: `Bajo (${stock})`, clase: 'stock-bajo' };
   return { texto: `${stock} und.`, clase: 'stock-ok' };
+}
+
+// Agrupa los productos en el orden del menú; los de categorías desconocidas van al final.
+function agruparPorCategoria(productos) {
+  const grupos = categorias.map((cat) => ({
+    ...cat,
+    productos: productos.filter((p) => p.categoria === cat.slug),
+  }));
+  const conocidas = new Set(categorias.map((cat) => cat.slug));
+  const otras = productos.filter((p) => !conocidas.has(p.categoria));
+  if (otras.length > 0) grupos.push({ slug: 'otras', nombre: 'Otras', productos: otras });
+  return grupos;
+}
+
+function contarAlertas(productos) {
+  const agotados = productos.filter((p) => Number(p.stock) <= 0).length;
+  const bajos = productos.filter((p) => Number(p.stock) > 0 && Number(p.stock) <= 3).length;
+  return { agotados, bajos };
 }
 
 function Admin() {
@@ -45,6 +67,8 @@ function Admin() {
 
   const [pestana, setPestana] = useState('productos');
   const [busqueda, setBusqueda] = useState('');
+  const [categoriaActiva, setCategoriaActiva] = useState('todas');
+  const [plegadas, setPlegadas] = useState(() => new Set());
   // null = formulario cerrado; { producto: null } = nuevo; { producto } = editar
   const [formulario, setFormulario] = useState(null);
   const [mensajeExito, setMensajeExito] = useState('');
@@ -63,9 +87,33 @@ function Admin() {
     const texto = busqueda.trim().toLowerCase();
     if (!texto) return catalogoCompleto;
     return catalogoCompleto.filter(
-      (p) => p.nombre.toLowerCase().includes(texto) || p.categoria.toLowerCase().includes(texto)
+      (p) =>
+        p.nombre.toLowerCase().includes(texto) ||
+        p.categoria.toLowerCase().includes(texto) ||
+        (p.marca ?? '').toLowerCase().includes(texto)
     );
   }, [catalogoCompleto, busqueda]);
+
+  // Los chips cuentan sobre la búsqueda, para que reflejen lo que se va a ver.
+  const gruposFiltrados = useMemo(
+    () => agruparPorCategoria(productosFiltrados),
+    [productosFiltrados]
+  );
+
+  const gruposVisibles = gruposFiltrados.filter(
+    (g) => g.productos.length > 0 && (categoriaActiva === 'todas' || g.slug === categoriaActiva)
+  );
+
+  const totalVisible = gruposVisibles.reduce((suma, g) => suma + g.productos.length, 0);
+
+  const alternarPlegada = (slug) => {
+    setPlegadas((anteriores) => {
+      const siguientes = new Set(anteriores);
+      if (siguientes.has(slug)) siguientes.delete(slug);
+      else siguientes.add(slug);
+      return siguientes;
+    });
+  };
 
   const abrirFormulario = (producto = null) => {
     setMensajeExito('');
@@ -201,83 +249,150 @@ function Admin() {
           <FontAwesomeIcon icon={faMagnifyingGlass} />
           <input
             type="text"
-            placeholder="Buscar por nombre o categoría…"
+            placeholder="Buscar por nombre, marca o categoría…"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
         <span className="admin-buscador-contador">
-          {productosFiltrados.length} producto{productosFiltrados.length === 1 ? '' : 's'}
+          {totalVisible} producto{totalVisible === 1 ? '' : 's'}
         </span>
       </div>
 
-      <div className="admin-tabla-contenedor">
-        <table className="admin-tabla">
-          <thead>
-            <tr>
-              <th></th>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productosFiltrados.map((producto) => {
-              const stockInfo = estadoStock(Number(producto.stock) || 0);
-              return (
-                <tr key={producto.id}>
-                  <td>
-                    <img
-                      src={producto.imagen}
-                      alt={producto.nombre}
-                      onError={handleImgError}
-                      className="admin-tabla-imagen"
-                    />
-                  </td>
-                  <td className="admin-tabla-nombre">{producto.nombre}</td>
-                  <td>
-                    <span className="admin-badge-categoria">{producto.categoria}</span>
-                  </td>
-                  <td className="admin-tabla-precio">{formatPrecioCOP(producto.precio)}</td>
-                  <td>
-                    <span className={`admin-badge-stock ${stockInfo.clase}`}>{stockInfo.texto}</span>
-                  </td>
-                  <td className="admin-tabla-acciones">
-                    <button
-                      type="button"
-                      className="btn-admin-editar"
-                      onClick={() => abrirFormulario(producto)}
-                      title="Editar"
-                    >
-                      <FontAwesomeIcon icon={faPen} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-admin-eliminar"
-                      onClick={() => handleEliminar(producto)}
-                      title="Eliminar"
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-            {productosFiltrados.length === 0 && (
-              <tr>
-                <td colSpan={6} className="admin-tabla-vacia">
-                  {cargandoProductos
-                    ? 'Cargando productos…'
-                    : errorProductos
-                    ? `No se pudieron cargar los productos: ${errorProductos}`
-                    : 'No hay productos que coincidan con tu búsqueda.'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="admin-categorias" role="group" aria-label="Filtrar por categoría">
+        <button
+          type="button"
+          className={`admin-categoria-chip ${categoriaActiva === 'todas' ? 'activa' : ''}`}
+          aria-pressed={categoriaActiva === 'todas'}
+          onClick={() => setCategoriaActiva('todas')}
+        >
+          <FontAwesomeIcon icon={faLayerGroup} /> Todas
+          <span className="admin-categoria-chip-cantidad">{productosFiltrados.length}</span>
+        </button>
+        {gruposFiltrados.map((grupo) => (
+          <button
+            key={grupo.slug}
+            type="button"
+            className={`admin-categoria-chip ${categoriaActiva === grupo.slug ? 'activa' : ''}`}
+            aria-pressed={categoriaActiva === grupo.slug}
+            disabled={grupo.productos.length === 0}
+            onClick={() => setCategoriaActiva(grupo.slug)}
+          >
+            <FontAwesomeIcon icon={ICONOS_CATEGORIA[grupo.slug] ?? faBox} /> {grupo.nombre}
+            <span className="admin-categoria-chip-cantidad">{grupo.productos.length}</span>
+          </button>
+        ))}
+      </div>
+
+      {gruposVisibles.length === 0 && (
+        <div className="admin-tabla-contenedor admin-tabla-vacia">
+          {cargandoProductos
+            ? 'Cargando productos…'
+            : errorProductos
+            ? `No se pudieron cargar los productos: ${errorProductos}`
+            : 'No hay productos que coincidan con tu búsqueda.'}
+        </div>
+      )}
+
+      <div className="admin-grupos">
+        {gruposVisibles.map((grupo) => {
+          const plegada = plegadas.has(grupo.slug);
+          const alertas = contarAlertas(grupo.productos);
+          const idCuerpo = `admin-grupo-${grupo.slug}`;
+          return (
+            <section key={grupo.slug} className="admin-grupo">
+              <button
+                type="button"
+                className="admin-grupo-header"
+                aria-expanded={!plegada}
+                aria-controls={idCuerpo}
+                onClick={() => alternarPlegada(grupo.slug)}
+              >
+                <span className="admin-grupo-icono">
+                  <FontAwesomeIcon icon={ICONOS_CATEGORIA[grupo.slug] ?? faBox} />
+                </span>
+                <span className="admin-grupo-titulo">
+                  <h2>{grupo.nombre}</h2>
+                  <span className="admin-grupo-cantidad">
+                    {grupo.productos.length} producto{grupo.productos.length === 1 ? '' : 's'}
+                  </span>
+                </span>
+                <span className="admin-grupo-alertas">
+                  {alertas.bajos > 0 && (
+                    <span className="admin-badge-stock stock-bajo">{alertas.bajos} con stock bajo</span>
+                  )}
+                  {alertas.agotados > 0 && (
+                    <span className="admin-badge-stock stock-agotado">
+                      {alertas.agotados} agotado{alertas.agotados === 1 ? '' : 's'}
+                    </span>
+                  )}
+                </span>
+                <FontAwesomeIcon
+                  icon={faChevronDown}
+                  className={`admin-grupo-flecha ${plegada ? 'plegada' : ''}`}
+                />
+              </button>
+
+              {!plegada && (
+                <div className="admin-tabla-contenedor" id={idCuerpo}>
+                  <table className="admin-tabla">
+                    <thead>
+                      <tr>
+                        <th></th>
+                        <th>Nombre</th>
+                        <th>Marca</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {grupo.productos.map((producto) => {
+                        const stockInfo = estadoStock(Number(producto.stock) || 0);
+                        return (
+                          <tr key={producto.id}>
+                            <td>
+                              <img
+                                src={producto.imagen}
+                                alt={producto.nombre}
+                                onError={handleImgError}
+                                className="admin-tabla-imagen"
+                              />
+                            </td>
+                            <td className="admin-tabla-nombre">{producto.nombre}</td>
+                            <td className="admin-tabla-marca">{producto.marca || '—'}</td>
+                            <td className="admin-tabla-precio">{formatPrecioCOP(producto.precio)}</td>
+                            <td>
+                              <span className={`admin-badge-stock ${stockInfo.clase}`}>{stockInfo.texto}</span>
+                            </td>
+                            <td className="admin-tabla-acciones">
+                              <button
+                                type="button"
+                                className="btn-admin-editar"
+                                onClick={() => abrirFormulario(producto)}
+                                title="Editar"
+                              >
+                                <FontAwesomeIcon icon={faPen} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-admin-eliminar"
+                                onClick={() => handleEliminar(producto)}
+                                title="Eliminar"
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
       </>
       )}
