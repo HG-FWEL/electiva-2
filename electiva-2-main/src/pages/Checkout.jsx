@@ -1,6 +1,6 @@
 // src/pages/Checkout.jsx
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useProductos } from '../context/ProductosContext';
@@ -54,9 +54,16 @@ function validarDatos(datos) {
 }
 
 // Abre el widget de Wompi con el monto y la firma que calculó el backend.
-// Wompi llama a onTransaccion solo cuando la transacción termina; si el usuario
-// cierra el widget sin pagar no hay callback.
+// Wompi llama a onTransaccion cuando la transacción termina. Con PSE, Nequi o
+// Bancolombia a veces no llega la transacción (o el banco devuelve al cliente a
+// redirectUrl con ?id=…), así que el backend también la busca por la referencia.
+// Wompi bloquea el widget (403) si redirectUrl no es https, como pasa con
+// http://localhost, así que solo se envía cuando la tienda está publicada.
 function abrirWidgetWompi(pago, datos, onTransaccion) {
+  const redirectUrl =
+    window.location.protocol === 'https:'
+      ? `${window.location.origin}/checkout?pedido=${encodeURIComponent(pago.referencia)}`
+      : undefined;
   const checkout = new window.WidgetCheckout({
     currency: pago.moneda,
     amountInCents: pago.montoCentavos,
@@ -64,6 +71,7 @@ function abrirWidgetWompi(pago, datos, onTransaccion) {
     publicKey: WOMPI_PUBLIC_KEY,
     signature: { integrity: pago.firma },
     customerData: { email: datos.email, fullName: datos.nombre },
+    ...(redirectUrl && { redirectUrl }),
   });
 
   checkout.open((resultado) => onTransaccion(resultado?.transaction ?? null));
@@ -178,6 +186,46 @@ function Checkout() {
   const [procesando, setProcesando] = useState(false);
   const [verificando, setVerificando] = useState(false);
   const [errorPago, setErrorPago] = useState('');
+  const [parametros, setParametros] = useSearchParams();
+  const regresoVerificado = useRef(false);
+
+  // Le pide al backend que verifique el pago con Wompi y muestra el resultado.
+  // Sin transaccionId, el backend busca el pago por la referencia del pedido.
+  const verificarPago = async (referencia, transaccionId) => {
+    setVerificando(true);
+    try {
+      const pedido = await pedirApi(`/api/pedidos/${encodeURIComponent(referencia)}/confirmar`, {
+        metodo: 'POST',
+        cuerpo: transaccionId ? { transaccionId } : {},
+      });
+      if (pedido.pago.estado === 'iniciado') {
+        setErrorPago('El pago no se completó. Puedes intentarlo de nuevo.');
+        return;
+      }
+      if (pedido.pago.estado === 'rechazado') {
+        setErrorPago('Tu banco rechazó el pago. Revisa los datos o prueba con otro medio de pago.');
+        return;
+      }
+      setPedidoConfirmado(pedido);
+      vaciarCarrito();
+      recargarProductos(); // el stock cambió
+    } catch (error) {
+      setErrorPago(`No pudimos verificar tu pago (pedido ${referencia}): ${error.message}`);
+    } finally {
+      setVerificando(false);
+    }
+  };
+
+  // Regreso desde el banco (PSE): Wompi vuelve a /checkout?pedido=…&id=…
+  useEffect(() => {
+    const referencia = parametros.get('pedido');
+    if (!referencia || regresoVerificado.current) return;
+    regresoVerificado.current = true;
+    const transaccionId = parametros.get('id');
+    setParametros({}, { replace: true });
+    verificarPago(referencia, transaccionId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useDocumentTitle(pedidoConfirmado ? 'Pedido confirmado' : 'Finalizar compra');
 
@@ -235,30 +283,7 @@ function Checkout() {
     // 2. Cuando Wompi termina, el backend verifica la transacción con Wompi
     //    antes de dar el pedido por pagado.
     const { referencia } = respuesta.pago;
-    abrirWidgetWompi(respuesta.pago, datos, async (transaccion) => {
-      if (!transaccion?.id) {
-        setErrorPago('El pago no se completó. Puedes intentarlo de nuevo.');
-        return;
-      }
-      setVerificando(true);
-      try {
-        const pedido = await pedirApi(`/api/pedidos/${encodeURIComponent(referencia)}/confirmar`, {
-          metodo: 'POST',
-          cuerpo: { transaccionId: transaccion.id },
-        });
-        if (pedido.pago.estado === 'rechazado') {
-          setErrorPago('Tu banco rechazó el pago. Revisa los datos de la tarjeta o prueba con otro medio de pago.');
-          return;
-        }
-        setPedidoConfirmado(pedido);
-        vaciarCarrito();
-        recargarProductos(); // el stock cambió
-      } catch (error) {
-        setErrorPago(`No pudimos verificar tu pago (pedido ${referencia}): ${error.message}`);
-      } finally {
-        setVerificando(false);
-      }
-    });
+    abrirWidgetWompi(respuesta.pago, datos, (transaccion) => verificarPago(referencia, transaccion?.id));
   };
 
   if (pedidoConfirmado) return <PedidoConfirmado pedido={pedidoConfirmado} />;
