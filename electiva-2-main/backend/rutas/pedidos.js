@@ -8,7 +8,7 @@ const {
   registrarPago,
   cambiarEstadoEnvio,
 } = require('../almacen');
-const { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion } = require('../wompi');
+const { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion, buscarTransaccionPorReferencia } = require('../wompi');
 const { avisarPedidoConfirmado, avisarPedidoEnviado } = require('../correo');
 
 const { requiereAdmin, sesionOpcional } = require('../auth');
@@ -251,9 +251,29 @@ async function usuarioDelPedido(sesion, cliente) {
  *       409:
  *         description: No hay stock suficiente
  */
+// Pagos que pueden haber cambiado (o un reintento con otro medio tras un rechazo) en Wompi sin que la tienda se enterara
+// (PSE, Nequi y Bancolombia no siempre devuelven la transacción al widget).
+// Solo se revisan los de los últimos 7 días para no consultar Wompi de más.
+const DIAS_REVISION_PAGOS = 7;
+
+async function sincronizarPagosAbiertos(pedidos) {
+  const limite = Date.now() - DIAS_REVISION_PAGOS * 24 * 60 * 60 * 1000;
+  const abiertos = pedidos.filter(
+    (p) => ['iniciado', 'pendiente', 'rechazado'].includes(p.pago.estado) && new Date(p.fecha).getTime() >= limite
+  );
+  const resultados = await Promise.allSettled(abiertos.map((p) => sincronizarPago(p)));
+  resultados.forEach((resultado, i) => {
+    if (resultado.status === 'rejected') {
+      console.error(`No se pudo revisar el pago del pedido ${abiertos[i].referencia}: ${resultado.reason?.message}`);
+    }
+  });
+  return abiertos.length > 0;
+}
+
 router.get('/', requiereAdmin, async (req, res) => {
   const filtro = req.query.estadoPago ? String(req.query.estadoPago).split(',') : null;
-  const pedidos = await listarPedidos();
+  let pedidos = await listarPedidos();
+  if (await sincronizarPagosAbiertos(pedidos)) pedidos = await listarPedidos();
   res.json(filtro ? pedidos.filter((p) => filtro.includes(p.pago.estado)) : pedidos);
 });
 
@@ -343,16 +363,15 @@ router.get('/:referencia', requiereAdmin, async (req, res) => {
  *         schema:
  *           type: string
  *     requestBody:
- *       required: true
+ *       required: false
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [transaccionId]
  *             properties:
  *               transaccionId:
  *                 type: string
- *                 description: ID de la transacción que devolvió el widget de Wompi
+ *                 description: ID de la transacción que devolvió el widget de Wompi. Si no se envía, el pago se busca en Wompi por la referencia del pedido (PSE, Nequi y Bancolombia a veces no la devuelven).
  *     responses:
  *       200:
  *         description: Pedido con el estado del pago verificado
@@ -369,43 +388,68 @@ router.get('/:referencia', requiereAdmin, async (req, res) => {
  *       502:
  *         description: No se pudo consultar a Wompi
  */
-router.post('/:referencia/confirmar', async (req, res) => {
-  const { transaccionId } = req.body ?? {};
-  if (typeof transaccionId !== 'string' || !transaccionId) {
-    return res.status(400).json({ error: 'Se requiere transaccionId' });
+class ErrorPago extends Error {
+  constructor(status, mensaje) {
+    super(mensaje);
+    this.status = status;
   }
+}
 
-  const pedidoActual = await obtenerPedido(req.params.referencia);
-  if (!pedidoActual) return res.status(404).json({ error: 'Pedido no encontrado' });
-  if (pedidoActual.pago.estado === 'aprobado' && pedidoActual.pago.transaccionId !== transaccionId) {
-    return res.status(409).json({ error: 'Este pedido ya fue pagado con otra transacción' });
+// Pregunta a Wompi por el pago del pedido y guarda lo que responda.
+// Con transaccionId consulta esa transacción; sin él, la busca por la
+// referencia del pedido. Si Wompi no tiene ninguna, el pedido queda igual.
+async function sincronizarPago(pedidoActual, transaccionId = null) {
+  if (pedidoActual.pago.estado === 'aprobado' && transaccionId && pedidoActual.pago.transaccionId !== transaccionId) {
+    throw new ErrorPago(409, 'Este pedido ya fue pagado con otra transacción');
   }
+  if (pedidoActual.pago.estado === 'aprobado') return pedidoActual;
 
   let transaccion;
   try {
-    transaccion = await consultarTransaccion(transaccionId);
+    transaccion = transaccionId
+      ? await consultarTransaccion(transaccionId)
+      : await buscarTransaccionPorReferencia(pedidoActual.referencia);
   } catch (error) {
-    return res.status(502).json({ error: `No se pudo verificar el pago con Wompi: ${error.message}` });
+    throw new ErrorPago(502, `No se pudo verificar el pago con Wompi: ${error.message}`);
   }
-  if (!transaccion) return res.status(400).json({ error: 'Wompi no tiene registrada esa transacción' });
+  if (!transaccion) {
+    if (transaccionId) throw new ErrorPago(400, 'Wompi no tiene registrada esa transacción');
+    return pedidoActual;
+  }
   if (
     transaccion.reference !== pedidoActual.referencia ||
     transaccion.amount_in_cents !== pedidoActual.montoCentavos ||
     transaccion.currency !== MONEDA
   ) {
-    return res.status(400).json({ error: 'La transacción de Wompi no corresponde a este pedido' });
+    throw new ErrorPago(400, 'La transacción de Wompi no corresponde a este pedido');
   }
 
   // La función SQL bloquea el pedido mientras guarda el pago, así dos
   // confirmaciones simultáneas no descuentan el stock dos veces.
   const pedido = await registrarPago(pedidoActual.referencia, {
-    transaccionId,
+    transaccionId: transaccion.id,
     estado: ESTADOS_WOMPI[transaccion.status] ?? 'pendiente',
     respuesta: { estadoWompi: transaccion.status, metodo: transaccion.payment_method_type ?? null },
   });
   // Solo la primera vez que el pago queda aprobado: verificar de nuevo no repite el correo.
-  if (pedidoActual.pago.estado !== 'aprobado' && pedido.pago.estado === 'aprobado') avisarPedidoConfirmado(pedido);
-  res.json(pedido);
+  if (pedido.pago.estado === 'aprobado') avisarPedidoConfirmado(pedido);
+  return pedido;
+}
+
+router.post('/:referencia/confirmar', async (req, res) => {
+  const { transaccionId } = req.body ?? {};
+  if (transaccionId !== undefined && transaccionId !== null && (typeof transaccionId !== 'string' || !transaccionId)) {
+    return res.status(400).json({ error: 'transaccionId debe ser un texto' });
+  }
+
+  const pedidoActual = await obtenerPedido(req.params.referencia);
+  if (!pedidoActual) return res.status(404).json({ error: 'Pedido no encontrado' });
+  try {
+    res.json(await sincronizarPago(pedidoActual, transaccionId || null));
+  } catch (error) {
+    if (error instanceof ErrorPago) return res.status(error.status).json({ error: error.message });
+    throw error;
+  }
 });
 
 /**

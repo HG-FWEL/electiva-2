@@ -27,4 +27,26 @@ async function consultarTransaccion(transaccionId) {
   return data;
 }
 
-module.exports = { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion };
+// Busca las transacciones de un pedido por su referencia (necesita la llave
+// privada). Con PSE, Nequi o Bancolombia el widget a veces no devuelve la
+// transacción, así que esta es la forma de saber si el cliente pagó.
+// Prefiere la aprobada, luego la pendiente y si no, la más reciente.
+async function buscarTransaccionPorReferencia(referencia) {
+  if (!process.env.WOMPI_PRIVATE_KEY) throw new Error('Falta WOMPI_PRIVATE_KEY en .env');
+  const respuesta = await fetch(`${WOMPI_API_URL}/transactions?reference=${encodeURIComponent(referencia)}`, {
+    headers: { Authorization: `Bearer ${process.env.WOMPI_PRIVATE_KEY}` },
+  });
+  if (!respuesta.ok) throw new Error(`Wompi respondió ${respuesta.status} al buscar el pago`);
+  const { data = [] } = await respuesta.json();
+  const transacciones = data
+    .filter((t) => t.reference === referencia)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return (
+    transacciones.find((t) => t.status === 'APPROVED') ??
+    transacciones.find((t) => t.status === 'PENDING') ??
+    transacciones[0] ??
+    null
+  );
+}
+
+module.exports = { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion, buscarTransaccionPorReferencia };
