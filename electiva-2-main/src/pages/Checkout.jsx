@@ -57,7 +57,13 @@ function validarDatos(datos) {
 // Wompi llama a onTransaccion cuando la transacción termina. Con PSE, Nequi o
 // Bancolombia a veces no llega la transacción (o el banco devuelve al cliente a
 // redirectUrl con ?id=…), así que el backend también la busca por la referencia.
+// Wompi bloquea el widget (403) si redirectUrl no es https, como pasa con
+// http://localhost, así que solo se envía cuando la tienda está publicada.
 function abrirWidgetWompi(pago, datos, onTransaccion) {
+  const redirectUrl =
+    window.location.protocol === 'https:'
+      ? `${window.location.origin}/checkout?pedido=${encodeURIComponent(pago.referencia)}`
+      : undefined;
   const checkout = new window.WidgetCheckout({
     currency: pago.moneda,
     amountInCents: pago.montoCentavos,
@@ -65,7 +71,7 @@ function abrirWidgetWompi(pago, datos, onTransaccion) {
     publicKey: WOMPI_PUBLIC_KEY,
     signature: { integrity: pago.firma },
     customerData: { email: datos.email, fullName: datos.nombre },
-    redirectUrl: `${window.location.origin}/checkout?pedido=${encodeURIComponent(pago.referencia)}`,
+    ...(redirectUrl && { redirectUrl }),
   });
 
   checkout.open((resultado) => onTransaccion(resultado?.transaction ?? null));
