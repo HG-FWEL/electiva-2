@@ -1,0 +1,60 @@
+# Blueprint de Render para MóvilMarket.
+# En Render: New → Blueprint → elegir este repositorio (Blueprint Path: render.yaml).
+# Las variables con "sync: false" las pide Render la primera vez; nunca se escriben aquí.
+
+services:
+  # Backend (Express): catálogo, sesiones, pedidos, pagos con Wompi y correos
+  - type: web
+    name: movimarket-backend
+    runtime: node
+    region: virginia
+    plan: free
+    rootDir: electiva-2-main/backend
+    buildCommand: npm ci
+    startCommand: node backend.js
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: WOMPI_INTEGRITY_KEY
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+
+  # Frontend (React + Vite) publicado como sitio estático
+  - type: web
+    name: movimarket-tienda
+    runtime: static
+    rootDir: electiva-2-main
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeployTrigger: commit
+    buildFilter:
+      ignoredPaths:
+        - electiva-2-main/backend/**
+    routes:
+      # Rutas como /celulares o /admin las resuelve React Router
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Dirección pública del backend, por ejemplo https://movimarket-backend.onrender.com
+      - key: VITE_API_URL
+        sync: false
+      # Llave pública de Wompi (pub_test_… en modo pruebas)
+      - key: VITE_WOMPI_PUBLIC_KEY
+        sync: false
