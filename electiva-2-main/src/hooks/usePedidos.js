@@ -48,5 +48,10 @@ export function usePedidos() {
     );
   };
 
-  return { pedidos, cargando, error, recargarPedidos, cambiarEstadoEnvio, verificarPago };
+  const eliminarPedido = async (referencia) => {
+    await pedirApi(`/api/pedidos/${encodeURIComponent(referencia)}`, { metodo: 'DELETE' });
+    setPedidos((prev) => prev.filter((p) => p.referencia !== referencia));
+  };
+
+  return { pedidos, cargando, error, recargarPedidos, cambiarEstadoEnvio, verificarPago, eliminarPedido };
 }

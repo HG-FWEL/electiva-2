@@ -17,6 +17,7 @@ import {
   faEnvelope,
   faRotateLeft,
   faRotate,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 
 const FILTROS = [
@@ -30,7 +31,7 @@ function formatFecha(iso) {
   return new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function AdminPedidos({ pedidos, cargando, error, recargarPedidos, cambiarEstadoEnvio, verificarPago }) {
+function AdminPedidos({ pedidos, cargando, error, recargarPedidos, cambiarEstadoEnvio, verificarPago, eliminarPedido }) {
   const [filtro, setFiltro] = useState('todos');
   const [busqueda, setBusqueda] = useState('');
   const [procesando, setProcesando] = useState(null);
@@ -77,6 +78,17 @@ function AdminPedidos({ pedidos, cargando, error, recargarPedidos, cambiarEstado
       if (!confirmado) return;
     }
     ejecutar(pedido, () => cambiarEstadoEnvio(pedido.referencia, estado));
+  };
+
+  const handleEliminar = (pedido) => {
+    const aviso = pedido.pago.estado === 'aprobado'
+      ? '\n\nEste pedido ya está pagado: eliminarlo no devuelve el dinero en Wompi ni repone el stock.'
+      : '';
+    const confirmado = window.confirm(
+      `¿Eliminar el pedido ${pedido.referencia} de ${pedido.cliente.nombre}? Esta acción no se puede deshacer.${aviso}`
+    );
+    if (!confirmado) return;
+    ejecutar(pedido, () => eliminarPedido(pedido.referencia));
   };
 
   return (
@@ -214,39 +226,51 @@ function AdminPedidos({ pedidos, cargando, error, recargarPedidos, cambiarEstado
               <span className="admin-pedido-total">
                 Total: <strong>{formatPrecioCOP(pedido.total)}</strong>
               </span>
-              {pedido.pago.estado === 'pendiente' ? (
-                <button
-                  type="button"
-                  className="btn-admin-revertir"
-                  disabled={procesando === pedido.referencia}
-                  onClick={() => ejecutar(pedido, () => verificarPago(pedido))}
-                  title="Preguntarle a Wompi si el pago ya se aprobó"
-                >
-                  <FontAwesomeIcon icon={faRotate} /> Verificar pago con Wompi
-                </button>
-              ) : pedido.envio.estado === 'revision' ? (
-                <button
-                  type="button"
-                  className="btn-admin-enviar"
-                  disabled={procesando === pedido.referencia}
-                  onClick={() => handleCambiarEstado(pedido, 'enviado')}
-                >
-                  <FontAwesomeIcon icon={faTruckFast} /> Marcar como enviado
-                </button>
-              ) : (
-                <div className="admin-pedido-enviado">
-                  <span>Enviado el {formatFecha(pedido.envio.fecha)}</span>
+              <div className="admin-pedido-acciones">
+                {pedido.pago.estado === 'pendiente' ? (
                   <button
                     type="button"
                     className="btn-admin-revertir"
                     disabled={procesando === pedido.referencia}
-                    onClick={() => handleCambiarEstado(pedido, 'revision')}
-                    title="Volver a revisión"
+                    onClick={() => ejecutar(pedido, () => verificarPago(pedido))}
+                    title="Preguntarle a Wompi si el pago ya se aprobó"
                   >
-                    <FontAwesomeIcon icon={faRotateLeft} /> Volver a revisión
+                    <FontAwesomeIcon icon={faRotate} /> Verificar pago con Wompi
                   </button>
-                </div>
-              )}
+                ) : pedido.envio.estado === 'revision' ? (
+                  <button
+                    type="button"
+                    className="btn-admin-enviar"
+                    disabled={procesando === pedido.referencia}
+                    onClick={() => handleCambiarEstado(pedido, 'enviado')}
+                  >
+                    <FontAwesomeIcon icon={faTruckFast} /> Marcar como enviado
+                  </button>
+                ) : (
+                  <div className="admin-pedido-enviado">
+                    <span>Enviado el {formatFecha(pedido.envio.fecha)}</span>
+                    <button
+                      type="button"
+                      className="btn-admin-revertir"
+                      disabled={procesando === pedido.referencia}
+                      onClick={() => handleCambiarEstado(pedido, 'revision')}
+                      title="Volver a revisión"
+                    >
+                      <FontAwesomeIcon icon={faRotateLeft} /> Volver a revisión
+                    </button>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="btn-admin-borrar-pedido"
+                  disabled={procesando === pedido.referencia}
+                  onClick={() => handleEliminar(pedido)}
+                  title="Eliminar pedido"
+                  aria-label={`Eliminar pedido ${pedido.referencia}`}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
+              </div>
             </footer>
           </article>
         ))}

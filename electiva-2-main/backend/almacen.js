@@ -309,6 +309,24 @@ async function cambiarEstadoEnvio(referencia, envio) {
   return obtenerPedido(referencia);
 }
 
+// Borra el pedido y sus filas dependientes. Devuelve false si no existía.
+async function eliminarPedido(referencia) {
+  const respuesta = await supabase.rpc('tienda_eliminar_pedido', { p_referencia: referencia });
+  // PGRST202: la función no existe porque no se ha vuelto a ejecutar la migración
+  if (respuesta.error?.code === 'PGRST202') {
+    const error = new Error('Falta ejecutar backend/supabase/migracion-tienda.sql en Supabase para poder eliminar pedidos');
+    error.status = 503;
+    throw error;
+  }
+  // 23503: otra tabla (por ejemplo una devolución) depende del pedido; no se borró nada
+  if (respuesta.error?.code === '23503') {
+    const error = new Error('No se puede eliminar: el pedido tiene otros datos que dependen de él (por ejemplo, una devolución)');
+    error.status = 409;
+    throw error;
+  }
+  return revisar(respuesta);
+}
+
 module.exports = {
   categoriaValida,
   listarProductos,
@@ -325,4 +343,5 @@ module.exports = {
   crearPedido,
   registrarPago,
   cambiarEstadoEnvio,
+  eliminarPedido,
 };

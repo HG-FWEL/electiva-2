@@ -40,7 +40,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, 
 - **Panel de administración** (solo administradores):
   - Productos organizados **por categoría**: botones para filtrar, secciones plegables y avisos de stock bajo y agotado. Buscador por nombre, marca o categoría.
   - Crear, editar y desactivar productos con vista previa en vivo y subida de imágenes.
-  - Ver los pedidos pagados, verificar pagos pendientes con Wompi y marcarlos como enviados.
+  - Ver los pedidos pagados, verificar pagos pendientes con Wompi, marcarlos como enviados y eliminarlos.
 - **Documentación de la API con Swagger** en `http://localhost:4000/api-docs`.
 - Diseño adaptable a celular y colores con contraste accesible (WCAG AA).
 
@@ -259,6 +259,7 @@ Documentación interactiva: **`http://localhost:4000/api-docs`**. Para probar la
 | `GET` | `/api/pedidos` | Admin | Lista los pedidos (filtro `?estadoPago=aprobado,pendiente`) |
 | `GET` | `/api/pedidos/:referencia` | Admin | Consulta un pedido |
 | `PATCH` | `/api/pedidos/:referencia/envio` | Admin | Marca un pedido como enviado (y avisa al cliente por correo) o en revisión |
+| `DELETE` | `/api/pedidos/:referencia` | Admin | Elimina un pedido con sus detalles, pagos e historial (no devuelve el dinero ni repone el stock) |
 
 Las rutas de administrador responden **401** sin sesión y **403** si la sesión no es de administrador.
 
