@@ -692,6 +692,38 @@
     width: 100%;
     justify-content: flex-start;
   }
+
+  /* En celular la tabla de productos no cabe: cada fila se vuelve una tarjeta
+     (imagen | nombre, marca y precio | acciones y stock) */
+  .admin-tabla thead {
+    display: none;
+  }
+
+  .admin-tabla tbody tr {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'imagen nombre acciones'
+      'imagen marca  acciones'
+      'imagen precio stock';
+    column-gap: 12px;
+    row-gap: 2px;
+    align-items: center;
+    padding: 12px 14px;
+    border-top: 1px solid var(--color-fondo-gris);
+  }
+
+  .admin-tabla td {
+    padding: 0;
+    border-top: none;
+  }
+
+  .admin-tabla td:nth-child(1) { grid-area: imagen; align-self: start; }
+  .admin-tabla td:nth-child(2) { grid-area: nombre; }
+  .admin-tabla td:nth-child(3) { grid-area: marca; font-size: 0.8rem; }
+  .admin-tabla td:nth-child(4) { grid-area: precio; }
+  .admin-tabla td:nth-child(5) { grid-area: stock; justify-self: end; }
+  .admin-tabla td:nth-child(6) { grid-area: acciones; justify-self: end; }
 }
 
 /* --- Pestañas --- */
