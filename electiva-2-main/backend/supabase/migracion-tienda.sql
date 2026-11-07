@@ -7,8 +7,8 @@
 --   1. Agrega dos columnas que el esquema no tenía: el modelo 3D del producto
 --      y la referencia de pago de Wompi del pedido.
 --   2. Crea funciones para las operaciones que tocan varias tablas a la vez
---      (guardar un producto, crear un pedido, registrar un pago), para que se
---      hagan completas o no se hagan.
+--      (guardar un producto, crear un pedido, registrar un pago, eliminar un
+--      pedido), para que se hagan completas o no se hagan.
 --   3. Deja esas funciones solo para el backend (llave secreta) y activa RLS
 --      en las tablas con datos privados.
 
@@ -347,6 +347,42 @@ begin
 end;
 $$;
 
+-- Borra un pedido con todo lo que cuelga de él (detalles, pagos, historial,
+-- envío...). Las tablas hijas se buscan en las llaves foráneas que apuntan a
+-- pedidos, así no hay que mantener una lista a mano. Si alguna de ellas
+-- tiene a su vez filas dependientes, Postgres rechaza el borrado y no se
+-- borra nada. No toca el stock ni devuelve dinero en Wompi.
+-- Devuelve false si no existe un pedido con esa referencia.
+create or replace function tienda_eliminar_pedido(p_referencia text)
+returns boolean
+language plpgsql
+set search_path = public
+as $$
+declare
+    v_pedido_id bigint;
+    v_hija record;
+begin
+    select id into v_pedido_id from pedidos where referencia = p_referencia for update;
+    if not found then
+        return false;
+    end if;
+
+    for v_hija in
+        select c.conrelid::regclass as tabla, a.attname as columna
+        from pg_constraint c
+        join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+        where c.contype = 'f'
+          and c.confrelid = 'pedidos'::regclass
+          and array_length(c.conkey, 1) = 1
+    loop
+        execute format('delete from %s where %I = $1', v_hija.tabla, v_hija.columna) using v_pedido_id;
+    end loop;
+
+    delete from pedidos where id = v_pedido_id;
+    return true;
+end;
+$$;
+
 -- 3. Permisos --------------------------------------------------------------
 
 -- Postgres deja ejecutar cualquier función nueva a todo el mundo; estas solo
@@ -356,7 +392,8 @@ revoke execute on function
     tienda_precio_vigente(productos),
     tienda_guardar_producto(jsonb),
     tienda_crear_pedido(text, bigint, text, jsonb, numeric, jsonb),
-    tienda_registrar_pago(text, text, text, jsonb, boolean)
+    tienda_registrar_pago(text, text, text, jsonb, boolean),
+    tienda_eliminar_pedido(text)
 from public, anon, authenticated;
 
 grant execute on function
@@ -364,7 +401,8 @@ grant execute on function
     tienda_precio_vigente(productos),
     tienda_guardar_producto(jsonb),
     tienda_crear_pedido(text, bigint, text, jsonb, numeric, jsonb),
-    tienda_registrar_pago(text, text, text, jsonb, boolean)
+    tienda_registrar_pago(text, text, text, jsonb, boolean),
+    tienda_eliminar_pedido(text)
 to service_role;
 
 -- Tablas con datos de clientes: RLS sin políticas = nadie las lee con la llave

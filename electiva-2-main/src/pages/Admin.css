@@ -645,11 +645,32 @@
 
 @media (max-width: 900px) {
   .admin-stats {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 640px) {
+  /* Montos largos como "$ 4.796.000" no deben empujar la tarjeta fuera de la pantalla */
+  .admin-stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.9rem;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .admin-stat-icono {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    font-size: 0.95rem;
+  }
+
+  .admin-stat-valor {
+    font-size: 1.2rem;
+    white-space: nowrap;
+  }
+
   .admin-header {
     flex-direction: column;
     align-items: flex-start;
@@ -1029,6 +1050,38 @@
 
 .btn-admin-revertir:hover {
   background: var(--color-borde);
+}
+
+.admin-pedido-acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-admin-borrar-pedido {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-admin-borrar-pedido:hover {
+  background: #fecaca;
+}
+
+.btn-admin-borrar-pedido:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 
 .admin-pedidos-vacio {

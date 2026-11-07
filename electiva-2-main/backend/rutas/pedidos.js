@@ -7,6 +7,7 @@ const {
   crearPedido,
   registrarPago,
   cambiarEstadoEnvio,
+  eliminarPedido,
 } = require('../almacen');
 const { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion, buscarTransaccionPorReferencia } = require('../wompi');
 const { avisarPedidoConfirmado, avisarPedidoEnviado } = require('../correo');
@@ -512,6 +513,41 @@ router.patch('/:referencia/envio', requiereAdmin, async (req, res) => {
   // Solo al pasar a "enviado": marcarlo de nuevo no repite el correo.
   if (pedido.envio.estado !== 'enviado' && actualizado.envio.estado === 'enviado') avisarPedidoEnviado(actualizado);
   res.json(actualizado);
+});
+
+/**
+ * @swagger
+ * /api/pedidos/{referencia}:
+ *   delete:
+ *     summary: Elimina un pedido y sus datos (detalles, pagos, historial) · solo administradores
+ *     description: No devuelve el dinero en Wompi ni repone el stock.
+ *     tags: [Pedidos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: referencia
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Pedido eliminado
+ *       401:
+ *         description: Sin sesión o sesión vencida
+ *       403:
+ *         description: La sesión no es de administrador
+ *       404:
+ *         description: No existe un pedido con esa referencia
+ *       409:
+ *         description: Otra tabla depende del pedido (por ejemplo, una devolución); no se borró nada
+ *       503:
+ *         description: Falta ejecutar la migración de Supabase que crea la función de borrado
+ */
+router.delete('/:referencia', requiereAdmin, async (req, res) => {
+  const eliminado = await eliminarPedido(req.params.referencia);
+  if (!eliminado) return res.status(404).json({ error: 'Pedido no encontrado' });
+  res.status(204).end();
 });
 
 module.exports = router;
