@@ -21,6 +21,15 @@ html, body, #root {
   color: #111827;
 }
 
+/* Las páginas se centran con margin: 0 auto; dentro de un contenedor flex eso
+   las encoge al ancho de su contenido (una tabla o una fila de botones podía
+   estirarlas más allá de la pantalla del celular). Así ocupan el ancho
+   disponible y su max-width sigue limitándolas en pantallas grandes. */
+.page-container > * {
+  width: 100%;
+  min-width: 0;
+}
+
 /* --- 1. NAVBAR (Ancho completo) --- */
 .navbar {
   width: 100%;
@@ -460,5 +469,105 @@ html, body, #root {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+  }
+}
+
+/* Celular: barra en tres filas ordenadas
+   1) logo + favoritos + carrito, 2) buscador, 3) Inicio/Productos + cuenta */
+@media (max-width: 600px) {
+  .navbar {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'logo   logo      .      fav    carrito'
+      'buscar buscar    buscar buscar buscar'
+      'inicio productos cuenta cuenta cuenta';
+    align-items: center;
+    column-gap: 0.9rem;
+    row-gap: 0.6rem;
+    padding: 0.8rem 16px;
+  }
+
+  .logo {
+    grid-area: logo;
+    font-size: 1.4rem;
+  }
+
+  .nav-links {
+    display: contents;
+  }
+
+  .nav-links > a:nth-child(1) { grid-area: inicio; }
+  .nav-links > a:nth-child(2) { grid-area: productos; }
+  .nav-links > .nav-icono-link { grid-area: fav; }
+  .nav-links > .nav-carrito-btn { grid-area: carrito; }
+
+  .nav-links a,
+  .nav-carrito-btn,
+  .nav-cuenta {
+    margin-left: 0;
+  }
+
+  .nav-links a {
+    font-size: 0.95rem;
+  }
+
+  .navbar-buscador {
+    grid-area: buscar;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .nav-cuenta {
+    grid-area: cuenta;
+    justify-self: end;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .nav-crear-cuenta {
+    padding: 6px 12px;
+  }
+
+  .nav-cerrar-sesion {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Celulares angostos: el nombre del usuario no cabe junto a los botones */
+@media (max-width: 400px) {
+  .navbar {
+    column-gap: 0.5rem;
+  }
+
+  .nav-links a,
+  .nav-crear-cuenta {
+    font-size: 0.85rem;
+  }
+
+  .nav-cuenta {
+    gap: 0.4rem;
+  }
+
+  .nav-crear-cuenta {
+    padding: 6px 9px;
+  }
+
+  /* El texto "Ingresar" basta; sin el ícono cabe junto a "Crear cuenta" */
+  .nav-ingresar svg {
+    display: none;
+  }
+
+  .nav-cuenta-nombre {
+    font-size: 0;
+    gap: 0;
+  }
+
+  .nav-cuenta-nombre svg,
+  .nav-cuenta-nombre .icono-duotone {
+    font-size: 1rem;
   }
 }

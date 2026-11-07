@@ -96,7 +96,9 @@
     align-items: stretch;
   }
 
+  /* En columna, el flex-basis de 220px se volvía alto y dejaba un hueco */
   .buscador-categoria {
+    flex: 0 0 auto;
     max-width: 100%;
   }
 
