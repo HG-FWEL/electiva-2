@@ -40,7 +40,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, 
 - **Panel de administración** (solo administradores):
   - Productos organizados **por categoría**: botones para filtrar, secciones plegables y avisos de stock bajo y agotado. Buscador por nombre, marca o categoría.
   - Crear, editar y desactivar productos con vista previa en vivo y subida de imágenes.
-  - Ver los pedidos pagados, verificar pagos pendientes con Wompi marcarlos como enviados y eliminarlos.
+  - Ver los pedidos pagados, verificar pagos pendientes con Wompi, marcarlos como enviados y eliminarlos.
 - **Documentación de la API con Swagger** en `http://localhost:4000/api-docs`.
 - Diseño adaptable a celular y colores con contraste accesible (WCAG AA).
 
