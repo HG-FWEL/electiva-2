@@ -99,7 +99,7 @@ function SeccionCheckout({ numero, titulo, children }) {
   );
 }
 
-function PedidoConfirmado({ pedido }) {
+function PedidoConfirmado({ pedido, conSesion }) {
   const aprobado = pedido.pago.estado === 'aprobado';
   const metodo = METODOS_ENVIO.find((m) => m.valor === pedido.metodoEnvio);
   const pasos = [
@@ -151,7 +151,10 @@ function PedidoConfirmado({ pedido }) {
         </p>
       </div>
 
-      <Link to="/productos" className="btn-volver-tienda">Seguir comprando</Link>
+      <div className="confirmacion-acciones">
+        {conSesion && <Link to="/mis-pedidos" className="btn-ver-mis-pedidos">Ver mis pedidos</Link>}
+        <Link to="/productos" className="btn-volver-tienda">Seguir comprando</Link>
+      </div>
     </div>
   );
 }
@@ -286,7 +289,7 @@ function Checkout() {
     abrirWidgetWompi(respuesta.pago, datos, (transaccion) => verificarPago(referencia, transaccion?.id));
   };
 
-  if (pedidoConfirmado) return <PedidoConfirmado pedido={pedidoConfirmado} />;
+  if (pedidoConfirmado) return <PedidoConfirmado pedido={pedidoConfirmado} conSesion={Boolean(usuarioActual)} />;
 
   if (carrito.length === 0) {
     return (

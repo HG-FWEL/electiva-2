@@ -264,6 +264,21 @@ async function listarPedidos() {
   return filas.map(aPedido);
 }
 
+// Pedidos de una cuenta, del más reciente al más antiguo. Incluye los que hizo
+// como invitado con el mismo correo (quedan a nombre de esa misma cuenta).
+async function listarPedidosDeUsuario(usuarioId) {
+  if (!/^\d+$/.test(String(usuarioId))) return [];
+  const filas = revisar(
+    await supabase
+      .from('pedidos')
+      .select(SELECT_PEDIDO)
+      .eq('usuario_id', usuarioId)
+      .not('referencia', 'is', null)
+      .order('fecha_pedido', { ascending: false })
+  );
+  return filas.map(aPedido);
+}
+
 async function obtenerPedido(referencia) {
   const fila = revisar(await supabase.from('pedidos').select(SELECT_PEDIDO).eq('referencia', referencia).maybeSingle());
   return fila ? aPedido(fila) : null;
@@ -339,6 +354,7 @@ module.exports = {
   activarCuentaInvitado,
   registrarInicioSesion,
   listarPedidos,
+  listarPedidosDeUsuario,
   obtenerPedido,
   crearPedido,
   registrarPago,

@@ -37,6 +37,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, 
 - **Correos a clientes** por Gmail: confirmación cuando se aprueba el pago y aviso cuando el pedido se marca como enviado.
 - **Pago con Wompi**: el backend calcula el total desde su propio catálogo, firma el pago y **verifica la transacción con Wompi** antes de darla por pagada. Al aprobarse, descuenta el stock.
 - **Registro e inicio de sesión** en el backend: contraseñas cifradas con **bcrypt** y sesiones con **JWT**.
+- **Mis pedidos**: cada cliente ve sus compras (también las que hizo como invitado con el mismo correo) y en qué estado va cada una: pago en verificación, preparando, enviado o pago rechazado. Se abre desde el nombre del usuario en la barra superior.
 - **Panel de administración** (solo administradores):
   - Productos organizados **por categoría**: botones para filtrar, secciones plegables y avisos de stock bajo y agotado. Buscador por nombre, marca o categoría.
   - Crear, editar y desactivar productos con vista previa en vivo y subida de imágenes.
@@ -234,6 +235,7 @@ En `electiva-2-main/backend/`: `node backend.js` inicia la API.
 | `/producto/:id` | Detalle de un producto |
 | `/buscar?q=texto` | Resultados de búsqueda |
 | `/favoritos` | Productos favoritos |
+| `/mis-pedidos` | Pedidos del cliente y su estado (requiere sesión) |
 | `/checkout` | Finalizar compra |
 | `/login` | Iniciar sesión |
 | `/registro` | Crear cuenta |
@@ -257,6 +259,7 @@ Documentación interactiva: **`http://localhost:4000/api-docs`**. Para probar la
 | `POST` | `/api/pedidos` | Público | Crea un pedido y devuelve la firma para pagarlo (con sesión, queda a nombre del usuario) |
 | `POST` | `/api/pedidos/:referencia/confirmar` | Público | Verifica el pago con Wompi; si queda aprobado, envía el correo de confirmación |
 | `GET` | `/api/pedidos` | Admin | Lista los pedidos (filtro `?estadoPago=aprobado,pendiente`) |
+| `GET` | `/api/pedidos/mios` | Con sesión | Pedidos de la cuenta de la sesión, sin los que nunca se pagaron |
 | `GET` | `/api/pedidos/:referencia` | Admin | Consulta un pedido |
 | `PATCH` | `/api/pedidos/:referencia/envio` | Admin | Marca un pedido como enviado (y avisa al cliente por correo) o en revisión |
 | `DELETE` | `/api/pedidos/:referencia` | Admin | Elimina un pedido con sus detalles, pagos e historial (no devuelve el dinero ni repone el stock) |
@@ -351,7 +354,7 @@ Para agregar un modelo a otro producto, copia el `.fbx` (y su carpeta de textura
 - [ ] Límite de intentos de inicio de sesión
 - [ ] Verificación de correo al registrarse y recuperación de contraseña
 - [ ] Carrito y favoritos guardados en la cuenta (hoy viven en el navegador)
-- [ ] Página "Mis pedidos" para los clientes
+- [x] Página "Mis pedidos" para los clientes
 
 ---
 
