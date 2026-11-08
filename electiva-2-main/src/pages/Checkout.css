@@ -537,6 +537,26 @@
   color: var(--color-texto-suave);
 }
 
+.confirmacion-acciones {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.btn-ver-mis-pedidos {
+  display: inline-block;
+  margin-top: 0.5rem;
+  background: var(--color-marca-suave);
+  color: var(--color-marca-texto);
+  text-decoration: none;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
 .btn-volver-tienda {
   display: inline-block;
   margin-top: 0.5rem;

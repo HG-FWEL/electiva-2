@@ -22,6 +22,7 @@ import Buscar from './pages/Buscar';
 import Login from './pages/Login';
 import Registro from './pages/Registro';
 import Admin from './pages/Admin';
+import MisPedidos from './pages/MisPedidos';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -92,14 +93,14 @@ function NavbarContent({ onOpenCart }) {
 
         {usuarioActual ? (
           <div className="nav-cuenta">
-            <span className="nav-cuenta-nombre">
+            <Link to="/mis-pedidos" className="nav-cuenta-nombre" title="Mis pedidos" aria-label={`Mis pedidos (${usuarioActual.nombre})`}>
               {esAdmin ? (
                 <FontAwesomeIcon icon={faUserShield} className="icono-usuario-admin" />
               ) : (
                 <IconoDuotone icon={faUser} />
               )}
               {usuarioActual.nombre.split(' ')[0]}
-            </span>
+            </Link>
             {esAdmin && (
               <Link to="/admin" className="nav-admin-link" title="Panel de administración" aria-label="Panel de administración">
                 <IconoDuotone icon={faGears} />
@@ -155,6 +156,7 @@ function Footer() {
           <ul>
             <li><Link to="/productos">Todos los productos</Link></li>
             <li><Link to="/favoritos">Favoritos</Link></li>
+            <li><Link to="/mis-pedidos">Mis pedidos</Link></li>
             <li><Link to="/checkout">Finalizar compra</Link></li>
             <li><Link to="/login">Ingresar</Link></li>
             <li><Link to="/registro">Crear cuenta</Link></li>
@@ -205,6 +207,7 @@ function AppShell() {
         <Route path="/buscar" element={<Buscar />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
+        <Route path="/mis-pedidos" element={<MisPedidos />} />
         <Route
           path="/admin"
           element={

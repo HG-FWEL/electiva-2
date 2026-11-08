@@ -155,6 +155,18 @@ html, body, #root {
   font-size: 0.9rem;
 }
 
+/* El nombre es un enlace a "Mis pedidos": sin el margen ni el color de los demás enlaces */
+.nav-cuenta .nav-cuenta-nombre {
+  margin-left: 0;
+  color: var(--color-texto);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.nav-cuenta .nav-cuenta-nombre:hover {
+  color: var(--color-marca-texto);
+}
+
 /* Ícono "duotone" simulado para el usuario cliente (fondo suave + trazo nítido) */
 .icono-duotone {
   position: relative;
@@ -561,7 +573,7 @@ html, body, #root {
     display: none;
   }
 
-  .nav-cuenta-nombre {
+  .nav-cuenta .nav-cuenta-nombre {
     font-size: 0;
     gap: 0;
   }

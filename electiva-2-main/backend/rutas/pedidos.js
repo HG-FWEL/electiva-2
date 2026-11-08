@@ -3,6 +3,7 @@ const {
   buscarUsuarioPorEmail,
   crearUsuario,
   listarPedidos,
+  listarPedidosDeUsuario,
   obtenerPedido,
   crearPedido,
   registrarPago,
@@ -12,7 +13,7 @@ const {
 const { ESTADOS_WOMPI, firmaIntegridad, consultarTransaccion, buscarTransaccionPorReferencia } = require('../wompi');
 const { avisarPedidoConfirmado, avisarPedidoEnviado } = require('../correo');
 
-const { requiereAdmin, sesionOpcional } = require('../auth');
+const { requiereAdmin, requiereSesion, sesionOpcional } = require('../auth');
 
 const router = express.Router();
 
@@ -276,6 +277,44 @@ router.get('/', requiereAdmin, async (req, res) => {
   let pedidos = await listarPedidos();
   if (await sincronizarPagosAbiertos(pedidos)) pedidos = await listarPedidos();
   res.json(filtro ? pedidos.filter((p) => filtro.includes(p.pago.estado)) : pedidos);
+});
+
+// Lo que ve el cliente de su propio pedido: sin datos internos del pago.
+function pedidoParaCliente(pedido) {
+  return {
+    referencia: pedido.referencia,
+    fecha: pedido.fecha,
+    items: pedido.items,
+    subtotal: pedido.subtotal,
+    costoEnvio: pedido.costoEnvio,
+    total: pedido.total,
+    metodoEnvio: pedido.metodoEnvio,
+    direccion: { direccion: pedido.cliente.direccion, ciudad: pedido.cliente.ciudad },
+    pago: { estado: pedido.pago.estado },
+    envio: pedido.envio,
+  };
+}
+
+/**
+ * @swagger
+ * /api/pedidos/mios:
+ *   get:
+ *     summary: Pedidos de la cuenta que inició sesión (también los que hizo como invitado con el mismo correo)
+ *     description: No incluye los pedidos cuyo pago nunca se completó en Wompi.
+ *     tags: [Pedidos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de pedidos, del más reciente al más antiguo
+ *       401:
+ *         description: Sin sesión o sesión vencida
+ */
+router.get('/mios', requiereSesion, async (req, res) => {
+  let pedidos = await listarPedidosDeUsuario(req.usuario.id);
+  // Un pago con PSE o Nequi puede haberse aprobado sin que la tienda se enterara
+  if (await sincronizarPagosAbiertos(pedidos)) pedidos = await listarPedidosDeUsuario(req.usuario.id);
+  res.json(pedidos.filter((p) => p.pago.estado !== 'iniciado').map(pedidoParaCliente));
 });
 
 router.post('/', sesionOpcional, async (req, res) => {

@@ -1,0 +1,312 @@
+.mis-pedidos-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 5% 4rem;
+  color: var(--color-texto);
+}
+
+.mis-pedidos-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.8rem;
+}
+
+.mis-pedidos-titulo h1 {
+  font-size: 2rem;
+  color: var(--color-primario);
+  letter-spacing: -0.5px;
+}
+
+.mis-pedidos-titulo p {
+  color: var(--color-texto-suave);
+  margin-top: 0.3rem;
+}
+
+.mis-pedidos-actualizar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-fondo-gris);
+  color: var(--color-texto-secundario);
+  border: none;
+  border-radius: 50px;
+  padding: 9px 16px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.mis-pedidos-actualizar:hover {
+  background: var(--color-borde);
+}
+
+.mis-pedidos-actualizar:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.mis-pedidos-cargando {
+  color: var(--color-texto-suave);
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.mis-pedidos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* --- Tarjeta de cada pedido --- */
+.mis-pedidos-tarjeta {
+  background: #ffffff;
+  border: 1px solid var(--color-borde);
+  border-left: 5px solid var(--color-primario);
+  border-radius: 18px;
+  padding: 1.4rem 1.5rem;
+  box-shadow: 0 8px 20px -14px rgba(15, 23, 42, 0.25);
+}
+
+.mis-pedidos-tarjeta.estado-enviado { border-left-color: var(--color-marca); }
+.mis-pedidos-tarjeta.estado-pendiente { border-left-color: #f59e0b; }
+.mis-pedidos-tarjeta.estado-rechazado { border-left-color: var(--color-error); }
+
+.mis-pedidos-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.mis-pedidos-cabecera h2 {
+  font-size: 1.1rem;
+  color: var(--color-texto);
+}
+
+.mis-pedidos-referencia {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+  overflow-wrap: anywhere;
+}
+
+.mis-pedidos-insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.insignia-preparando { background: var(--color-info-fondo); color: var(--color-info); }
+.insignia-enviado { background: var(--color-marca-suave); color: var(--color-marca-texto); }
+.insignia-pendiente { background: var(--color-aviso-fondo); color: var(--color-aviso); }
+.insignia-rechazado { background: var(--color-error-fondo); color: var(--color-error); }
+
+/* --- Línea de avance: Pago aprobado → Preparando → Enviado --- */
+.mis-pedidos-pasos {
+  display: flex;
+  list-style: none;
+  margin: 1.4rem 0 1rem;
+  padding: 0;
+  position: relative;
+  font-size: 0.8rem;
+  color: var(--color-texto-suave);
+}
+
+.mis-pedidos-pasos::before {
+  content: '';
+  position: absolute;
+  top: 11px;
+  left: 16%;
+  right: 16%;
+  height: 2px;
+  background: var(--color-borde);
+}
+
+.mis-pedidos-paso {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  text-align: center;
+}
+
+.mis-pedidos-paso-punto {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 2px solid var(--color-borde-fuerte);
+  font-size: 0.7rem;
+}
+
+.mis-pedidos-paso.paso-hecho {
+  color: var(--color-marca-texto);
+  font-weight: 700;
+}
+
+.mis-pedidos-paso.paso-hecho .mis-pedidos-paso-punto {
+  background: var(--color-marca);
+  border-color: var(--color-marca);
+  color: var(--color-sobre-marca);
+}
+
+.mis-pedidos-paso.paso-actual {
+  color: var(--color-primario);
+  font-weight: 700;
+}
+
+.mis-pedidos-paso.paso-actual .mis-pedidos-paso-punto {
+  border-color: var(--color-primario);
+  box-shadow: inset 0 0 0 4px #ffffff, inset 0 0 0 12px var(--color-primario);
+}
+
+.mis-pedidos-mensaje {
+  font-size: 0.88rem;
+  color: var(--color-texto-secundario);
+  background: var(--color-fondo-suave);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+
+.mis-pedidos-mensaje.mensaje-exito { background: var(--color-marca-suave); color: var(--color-marca-texto); }
+.mis-pedidos-mensaje.mensaje-aviso { background: var(--color-aviso-fondo); color: var(--color-aviso); }
+.mis-pedidos-mensaje.mensaje-error { background: var(--color-error-fondo); color: var(--color-error); }
+
+/* --- Productos del pedido --- */
+.mis-pedidos-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mis-pedidos-items li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0.6rem 0;
+  border-top: 1px solid var(--color-fondo-gris);
+  font-size: 0.9rem;
+}
+
+.mis-pedidos-items img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  background: var(--color-fondo-suave);
+  border: 1px solid var(--color-borde);
+  border-radius: 10px;
+}
+
+.mis-pedidos-item-nombre {
+  font-weight: 600;
+}
+
+.mis-pedidos-item-cantidad {
+  color: var(--color-texto-suave);
+}
+
+.mis-pedidos-item-precio {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mis-pedidos-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--color-borde);
+  font-size: 0.85rem;
+  color: var(--color-texto-suave);
+}
+
+.mis-pedidos-total {
+  color: var(--color-texto);
+}
+
+.mis-pedidos-total strong {
+  font-size: 1.1rem;
+  margin-left: 4px;
+}
+
+/* --- Sin pedidos / error --- */
+.mis-pedidos-vacio {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed var(--color-borde-fuerte);
+  border-radius: 18px;
+  color: var(--color-texto-suave);
+}
+
+.mis-pedidos-vacio h2 {
+  color: var(--color-texto);
+  margin-bottom: 0.4rem;
+}
+
+.mis-pedidos-vacio-icono {
+  font-size: 2.2rem;
+  color: var(--color-borde-fuerte);
+  margin-bottom: 0.6rem;
+}
+
+.mis-pedidos-boton {
+  display: inline-block;
+  margin-top: 1rem;
+  background: var(--color-primario);
+  color: #ffffff;
+  text-decoration: none;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .mis-pedidos-page {
+    padding: 1.5rem 16px 3rem;
+  }
+
+  .mis-pedidos-titulo h1 {
+    font-size: 1.6rem;
+  }
+
+  .mis-pedidos-tarjeta {
+    padding: 1.1rem 1rem;
+  }
+
+  /* Producto: imagen | nombre arriba, cantidad y precio abajo */
+  .mis-pedidos-items li {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'imagen nombre   nombre'
+      'imagen cantidad precio';
+    row-gap: 2px;
+  }
+
+  .mis-pedidos-items img { grid-area: imagen; }
+  .mis-pedidos-item-nombre { grid-area: nombre; }
+  .mis-pedidos-item-cantidad { grid-area: cantidad; }
+  .mis-pedidos-item-precio { grid-area: precio; }
+}
