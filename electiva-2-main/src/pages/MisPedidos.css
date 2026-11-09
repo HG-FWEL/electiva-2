@@ -249,6 +249,12 @@
   margin-left: 4px;
 }
 
+.mis-pedidos-factura {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.9rem;
+}
+
 /* --- Sin pedidos / error --- */
 .mis-pedidos-vacio {
   text-align: center;

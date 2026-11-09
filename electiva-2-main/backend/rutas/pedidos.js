@@ -279,7 +279,8 @@ router.get('/', requiereAdmin, async (req, res) => {
   res.json(filtro ? pedidos.filter((p) => filtro.includes(p.pago.estado)) : pedidos);
 });
 
-// Lo que ve el cliente de su propio pedido: sin datos internos del pago.
+// Lo que ve el cliente de su propio pedido: sus datos y los del pago que
+// necesita la factura, sin datos internos (montos en centavos, stock...).
 function pedidoParaCliente(pedido) {
   return {
     referencia: pedido.referencia,
@@ -290,7 +291,16 @@ function pedidoParaCliente(pedido) {
     total: pedido.total,
     metodoEnvio: pedido.metodoEnvio,
     direccion: { direccion: pedido.cliente.direccion, ciudad: pedido.cliente.ciudad },
-    pago: { estado: pedido.pago.estado },
+    cliente: {
+      nombre: pedido.cliente.nombre,
+      email: pedido.cliente.email,
+      telefono: pedido.cliente.telefono,
+    },
+    pago: {
+      estado: pedido.pago.estado,
+      transaccionId: pedido.pago.transaccionId,
+      fecha: pedido.pago.verificadoEn,
+    },
     envio: pedido.envio,
   };
 }

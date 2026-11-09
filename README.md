@@ -38,10 +38,11 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, 
 - **Pago con Wompi**: el backend calcula el total desde su propio catálogo, firma el pago y **verifica la transacción con Wompi** antes de darla por pagada. Al aprobarse, descuenta el stock.
 - **Registro e inicio de sesión** en el backend: contraseñas cifradas con **bcrypt** y sesiones con **JWT**.
 - **Mis pedidos**: cada cliente ve sus compras (también las que hizo como invitado con el mismo correo) y en qué estado va cada una: pago en verificación, preparando, enviado o pago rechazado. Se abre desde el nombre del usuario en la barra superior.
+- **Factura en PDF**: cada pedido pagado tiene el botón "Descargar factura" (en *Mis pedidos* y en el panel de administración). Se genera en el navegador con [jsPDF](https://github.com/parallax/jsPDF) e incluye los datos del cliente, la transacción de Wompi, los productos, el envío y el total. Es un comprobante de la tienda; no reemplaza la factura electrónica de la DIAN.
 - **Panel de administración** (solo administradores):
   - Productos organizados **por categoría**: botones para filtrar, secciones plegables y avisos de stock bajo y agotado. Buscador por nombre, marca o categoría.
   - Crear, editar y desactivar productos con vista previa en vivo y subida de imágenes.
-  - Ver los pedidos pagados, verificar pagos pendientes con Wompi, marcarlos como enviados y eliminarlos.
+  - Ver los pedidos pagados, descargar su factura, verificar pagos pendientes con Wompi, marcarlos como enviados y eliminarlos.
 - **Documentación de la API con Swagger** en `http://localhost:4000/api-docs`.
 - Diseño adaptable a celular y colores con contraste accesible (WCAG AA).
 
@@ -262,7 +263,7 @@ Documentación interactiva: **`http://localhost:4000/api-docs`**. Para probar la
 | `POST` | `/api/pedidos` | Público | Crea un pedido y devuelve la firma para pagarlo (con sesión, queda a nombre del usuario) |
 | `POST` | `/api/pedidos/:referencia/confirmar` | Público | Verifica el pago con Wompi; si queda aprobado, envía el correo de confirmación |
 | `GET` | `/api/pedidos` | Admin | Lista los pedidos (filtro `?estadoPago=aprobado,pendiente`) |
-| `GET` | `/api/pedidos/mios` | Con sesión | Pedidos de la cuenta de la sesión, sin los que nunca se pagaron |
+| `GET` | `/api/pedidos/mios` | Con sesión | Pedidos de la cuenta de la sesión (con los datos de la factura), sin los que nunca se pagaron |
 | `GET` | `/api/pedidos/:referencia` | Admin | Consulta un pedido |
 | `PATCH` | `/api/pedidos/:referencia/envio` | Admin | Marca un pedido como enviado (y avisa al cliente por correo) o en revisión |
 | `DELETE` | `/api/pedidos/:referencia` | Admin | Elimina un pedido con sus detalles, pagos e historial (no devuelve el dinero ni repone el stock) |

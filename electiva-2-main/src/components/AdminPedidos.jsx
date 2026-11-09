@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { ESTADOS_ENVIO } from '../hooks/usePedidos';
 import { handleImgError } from '../utils/placeholder';
 import { formatPrecioCOP } from '../utils/precio';
+import BotonFactura from './BotonFactura';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faReceipt,
@@ -227,6 +228,7 @@ function AdminPedidos({ pedidos, cargando, error, recargarPedidos, cambiarEstado
                 Total: <strong>{formatPrecioCOP(pedido.total)}</strong>
               </span>
               <div className="admin-pedido-acciones">
+                {pedido.pago.estado === 'aprobado' && <BotonFactura pedido={pedido} compacto />}
                 {pedido.pago.estado === 'pendiente' ? (
                   <button
                     type="button"
