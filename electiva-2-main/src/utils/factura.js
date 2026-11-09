@@ -20,6 +20,15 @@ const COLOR_BORDE = [226, 232, 240];
 const limpiar = (texto) => String(texto ?? '').replace(/[  ]/g, ' ');
 const precio = (valor) => limpiar(formatPrecioCOP(valor));
 
+const SIGLAS_DOCUMENTO = { CC: 'C.C.', CE: 'C.E.', NIT: 'NIT', PP: 'Pasaporte', TI: 'T.I.' };
+
+// "C.C. 1077123456"; los pedidos de antes de pedir el documento no lo tienen.
+function documentoDe(cliente) {
+  if (!cliente?.numeroDocumento) return '';
+  const sigla = SIGLAS_DOCUMENTO[cliente.tipoDocumento] ?? cliente.tipoDocumento ?? '';
+  return `${sigla} ${cliente.numeroDocumento}`.trim();
+}
+
 function fecha(iso) {
   if (!iso) return '';
   return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -27,7 +36,8 @@ function fecha(iso) {
 
 /**
  * pedido: { referencia, fecha, items[{ nombre, cantidad, precio }], subtotal, costoEnvio, total,
- *           metodoEnvio, cliente{ nombre, email, telefono, direccion?, ciudad? },
+ *           metodoEnvio, clienteId, cliente{ nombre, tipoDocumento, numeroDocumento, email, telefono,
+ *           direccion?, ciudad? },
  *           direccion?{ direccion, ciudad }, pago{ transaccionId, fecha? / verificadoEn? } }
  * Sirve tanto para "Mis pedidos" como para el panel de administración.
  */
@@ -72,6 +82,8 @@ export async function descargarFactura(pedido) {
   doc.setFontSize(10);
   const columnaCliente = [
     limpiar(pedido.cliente?.nombre),
+    limpiar(documentoDe(pedido.cliente)),
+    pedido.clienteId ? `Cliente N.° ${pedido.clienteId}` : '',
     limpiar(pedido.cliente?.email),
     pedido.cliente?.telefono ? `Tel. ${limpiar(pedido.cliente.telefono)}` : '',
     limpiar([direccion, ciudad].filter(Boolean).join(', ')),

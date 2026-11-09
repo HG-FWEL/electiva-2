@@ -35,19 +35,34 @@ function leerDatosEnvio() {
   }
 }
 
-function guardarDatosEnvio({ telefono, direccion, ciudad }) {
+function guardarDatosEnvio({ telefono, direccion, ciudad, tipoDocumento, numeroDocumento }) {
   try {
-    window.localStorage.setItem(DATOS_ENVIO_KEY, JSON.stringify({ telefono, direccion, ciudad }));
+    window.localStorage.setItem(
+      DATOS_ENVIO_KEY,
+      JSON.stringify({ telefono, direccion, ciudad, tipoDocumento, numeroDocumento })
+    );
   } catch {
     // Si el navegador no deja guardar, simplemente no se recuerdan.
   }
 }
+
+// Los mismos tipos que acepta el backend (TIPOS_DOCUMENTO en backend/rutas/pedidos.js).
+const TIPOS_DOCUMENTO = [
+  { valor: 'CC', nombre: 'Cédula de ciudadanía' },
+  { valor: 'CE', nombre: 'Cédula de extranjería' },
+  { valor: 'NIT', nombre: 'NIT' },
+  { valor: 'PP', nombre: 'Pasaporte' },
+  { valor: 'TI', nombre: 'Tarjeta de identidad' },
+];
 
 function validarDatos(datos) {
   const errores = {};
   if (!datos.nombre.trim()) errores.nombre = 'Ingresa tu nombre completo';
   if (!/^\S+@\S+\.\S+$/.test(datos.email.trim())) errores.email = 'Ingresa un correo válido';
   if (datos.telefono.replace(/\D/g, '').length < 7) errores.telefono = 'Ingresa un teléfono de al menos 7 dígitos';
+  if (!/^[A-Za-z0-9-]{4,20}$/.test(datos.numeroDocumento.replace(/[\s.]/g, ''))) {
+    errores.numeroDocumento = 'Ingresa tu número de documento';
+  }
   if (!datos.direccion.trim()) errores.direccion = 'Ingresa tu dirección de envío';
   if (!datos.ciudad.trim()) errores.ciudad = 'Ingresa tu ciudad';
   return errores;
@@ -179,6 +194,8 @@ function Checkout() {
       nombre: usuarioActual?.nombre || '',
       email: usuarioActual?.email || '',
       telefono: guardados.telefono || '',
+      tipoDocumento: guardados.tipoDocumento || 'CC',
+      numeroDocumento: guardados.numeroDocumento || '',
       direccion: guardados.direccion || '',
       ciudad: guardados.ciudad || '',
       notas: '',
@@ -318,6 +335,27 @@ function Checkout() {
               </Campo>
               <Campo etiqueta="Correo electrónico" error={errores.email}>
                 <input type="email" autoComplete="email" value={datos.email} onChange={handleChange('email')} />
+              </Campo>
+              <Campo etiqueta="Documento de identidad (para la factura)" error={errores.numeroDocumento} ancho="completo">
+                <div className="checkout-documento">
+                  <select
+                    aria-label="Tipo de documento"
+                    value={datos.tipoDocumento}
+                    onChange={handleChange('tipoDocumento')}
+                  >
+                    {TIPOS_DOCUMENTO.map((tipo) => (
+                      <option key={tipo.valor} value={tipo.valor}>{tipo.nombre}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    inputMode={datos.tipoDocumento === 'PP' ? 'text' : 'numeric'}
+                    aria-label="Número de documento"
+                    placeholder="Ej: 1077123456"
+                    value={datos.numeroDocumento}
+                    onChange={handleChange('numeroDocumento')}
+                  />
+                </div>
               </Campo>
               <Campo etiqueta="Teléfono" error={errores.telefono}>
                 <input type="tel" autoComplete="tel" placeholder="Ej: 300 123 4567" value={datos.telefono} onChange={handleChange('telefono')} />

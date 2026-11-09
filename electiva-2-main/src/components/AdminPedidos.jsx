@@ -16,6 +16,7 @@ import {
   faLocationDot,
   faPhone,
   faEnvelope,
+  faIdCard,
   faRotateLeft,
   faRotate,
   faTrash,
@@ -216,6 +217,12 @@ function AdminPedidos({ pedidos, cargando, error, recargarPedidos, cambiarEstado
                 <p>
                   <FontAwesomeIcon icon={faEnvelope} /> {pedido.cliente.email}
                 </p>
+                {pedido.cliente.numeroDocumento && (
+                  <p>
+                    <FontAwesomeIcon icon={faIdCard} /> {pedido.cliente.tipoDocumento} {pedido.cliente.numeroDocumento}
+                    {pedido.clienteId && ` · Cliente N.° ${pedido.clienteId}`}
+                  </p>
+                )}
                 <p className="admin-pedido-metodo">
                   Envío {pedido.metodoEnvio === 'express' ? 'Express (24-48h)' : 'Estándar (3-5 días)'}
                 </p>

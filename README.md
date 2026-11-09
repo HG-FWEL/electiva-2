@@ -33,12 +33,12 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, 
 - **Buscador** en la barra de navegación con página de resultados.
 - **Detalle de producto** con selector de cantidad y visor **3D** (rotar, acercar y alejar) para los productos que tienen modelo.
 - **Carrito** sincronizado con el catálogo: si un precio o el stock cambian, el carrito se actualiza y avisa.
-- **Checkout** por secciones (envío, método de envío y pago) con validación por campo.
+- **Checkout** por secciones (envío, método de envío y pago) con validación por campo. Pide el documento de identidad (C.C., C.E., NIT, pasaporte o T.I.) para la factura.
 - **Correos a clientes** por Brevo o Gmail: confirmación cuando se aprueba el pago y aviso cuando el pedido se marca como enviado.
 - **Pago con Wompi**: el backend calcula el total desde su propio catálogo, firma el pago y **verifica la transacción con Wompi** antes de darla por pagada. Al aprobarse, descuenta el stock.
 - **Registro e inicio de sesión** en el backend: contraseñas cifradas con **bcrypt** y sesiones con **JWT**.
 - **Mis pedidos**: cada cliente ve sus compras (también las que hizo como invitado con el mismo correo) y en qué estado va cada una: pago en verificación, preparando, enviado o pago rechazado. Se abre desde el nombre del usuario en la barra superior.
-- **Factura en PDF**: cada pedido pagado tiene el botón "Descargar factura" (en *Mis pedidos* y en el panel de administración). Se genera en el navegador con [jsPDF](https://github.com/parallax/jsPDF) e incluye los datos del cliente, la transacción de Wompi, los productos, el envío y el total. Es un comprobante de la tienda; no reemplaza la factura electrónica de la DIAN.
+- **Factura en PDF**: cada pedido pagado tiene el botón "Descargar factura" (en *Mis pedidos* y en el panel de administración). Se genera en el navegador con [jsPDF](https://github.com/parallax/jsPDF) e incluye los datos del cliente (con su documento y su número de cliente), la transacción de Wompi, los productos, el envío y el total. Es un comprobante de la tienda; no reemplaza la factura electrónica de la DIAN.
 - **Panel de administración** (solo administradores):
   - Productos organizados **por categoría**: botones para filtrar, secciones plegables y avisos de stock bajo y agotado. Buscador por nombre, marca o categoría.
   - Crear, editar y desactivar productos con vista previa en vivo y subida de imágenes.
