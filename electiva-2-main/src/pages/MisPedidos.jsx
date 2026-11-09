@@ -16,6 +16,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { pedirApi } from '../utils/api';
 import { formatPrecioCOP } from '../utils/precio';
 import { handleImgError } from '../utils/placeholder';
+import BotonFactura from '../components/BotonFactura';
 import './MisPedidos.css';
 
 function formatFecha(iso) {
@@ -108,6 +109,13 @@ function TarjetaPedido({ pedido }) {
           Total <strong>{formatPrecioCOP(pedido.total)}</strong>
         </span>
       </footer>
+
+      {/* Solo los pedidos pagados tienen factura */}
+      {pedido.pago.estado === 'aprobado' && (
+        <div className="mis-pedidos-factura">
+          <BotonFactura pedido={pedido} />
+        </div>
+      )}
     </article>
   );
 }

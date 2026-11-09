@@ -24,6 +24,9 @@ services:
         sync: false
       - key: WOMPI_INTEGRITY_KEY
         sync: false
+      # Llave privada de Wompi (prv_test_…): revisa pagos que el widget no devolvió (PSE, Nequi)
+      - key: WOMPI_PRIVATE_KEY
+        sync: false
       - key: ADMIN_EMAIL
         sync: false
       - key: ADMIN_PASSWORD
@@ -31,6 +34,9 @@ services:
       - key: GMAIL_USER
         sync: false
       - key: GMAIL_APP_PASSWORD
+        sync: false
+      # Correos en Render: el plan gratuito bloquea SMTP (Gmail), así que se envían con Brevo
+      - key: BREVO_API_KEY
         sync: false
 
   # Frontend (React + Vite) publicado como sitio estático

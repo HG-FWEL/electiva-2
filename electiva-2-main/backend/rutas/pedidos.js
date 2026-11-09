@@ -23,7 +23,13 @@ const MONEDA = 'COP';
 // valores, pero el que se cobra es siempre el de aquí.
 const COSTOS_ENVIO = { estandar: 0, express: 60000 };
 
-const CAMPOS_CLIENTE = ['nombre', 'email', 'telefono', 'direccion', 'ciudad'];
+const CAMPOS_CLIENTE = ['nombre', 'email', 'telefono', 'tipoDocumento', 'numeroDocumento', 'direccion', 'ciudad'];
+
+// Documentos para la factura: cédula, cédula de extranjería, NIT, pasaporte y tarjeta de identidad.
+const TIPOS_DOCUMENTO = ['CC', 'CE', 'NIT', 'PP', 'TI'];
+
+// "1.077.123 456" -> "1077123456": se guardan sin puntos ni espacios.
+const normalizarDocumento = (numero) => numero.replace(/[\s.]/g, '');
 
 function validarCliente(cliente) {
   if (!cliente || typeof cliente !== 'object') return 'Faltan los datos del cliente';
@@ -31,6 +37,12 @@ function validarCliente(cliente) {
     if (typeof cliente[campo] !== 'string' || !cliente[campo].trim()) return `Falta el campo cliente.${campo}`;
   }
   if (!/^\S+@\S+\.\S+$/.test(cliente.email)) return 'El correo del cliente no es válido';
+  if (!TIPOS_DOCUMENTO.includes(cliente.tipoDocumento)) {
+    return `El tipo de documento debe ser uno de: ${TIPOS_DOCUMENTO.join(', ')}`;
+  }
+  if (!/^[A-Za-z0-9-]{4,20}$/.test(normalizarDocumento(cliente.numeroDocumento))) {
+    return 'El número de documento no es válido';
+  }
   return null;
 }
 
@@ -69,7 +81,7 @@ async function usuarioDelPedido(sesion, cliente) {
  *   schemas:
  *     Cliente:
  *       type: object
- *       required: [nombre, email, telefono, direccion, ciudad]
+ *       required: [nombre, email, telefono, tipoDocumento, numeroDocumento, direccion, ciudad]
  *       properties:
  *         nombre:
  *           type: string
@@ -80,6 +92,14 @@ async function usuarioDelPedido(sesion, cliente) {
  *         telefono:
  *           type: string
  *           example: '3001234567'
+ *         tipoDocumento:
+ *           type: string
+ *           enum: [CC, CE, NIT, PP, TI]
+ *           example: CC
+ *         numeroDocumento:
+ *           type: string
+ *           description: Se guarda sin puntos ni espacios
+ *           example: '1077123456'
  *         direccion:
  *           type: string
  *           example: Calle 10 # 20-30
@@ -100,6 +120,10 @@ async function usuarioDelPedido(sesion, cliente) {
  *           format: date-time
  *         cliente:
  *           $ref: '#/components/schemas/Cliente'
+ *         clienteId:
+ *           type: string
+ *           nullable: true
+ *           description: Número de cliente de la tienda (la cuenta del pedido; los invitados también tienen una)
  *         usuario:
  *           type: object
  *           nullable: true
@@ -279,7 +303,8 @@ router.get('/', requiereAdmin, async (req, res) => {
   res.json(filtro ? pedidos.filter((p) => filtro.includes(p.pago.estado)) : pedidos);
 });
 
-// Lo que ve el cliente de su propio pedido: sin datos internos del pago.
+// Lo que ve el cliente de su propio pedido: sus datos y los del pago que
+// necesita la factura, sin datos internos (montos en centavos, stock...).
 function pedidoParaCliente(pedido) {
   return {
     referencia: pedido.referencia,
@@ -290,7 +315,19 @@ function pedidoParaCliente(pedido) {
     total: pedido.total,
     metodoEnvio: pedido.metodoEnvio,
     direccion: { direccion: pedido.cliente.direccion, ciudad: pedido.cliente.ciudad },
-    pago: { estado: pedido.pago.estado },
+    clienteId: pedido.clienteId,
+    cliente: {
+      nombre: pedido.cliente.nombre,
+      email: pedido.cliente.email,
+      telefono: pedido.cliente.telefono,
+      tipoDocumento: pedido.cliente.tipoDocumento,
+      numeroDocumento: pedido.cliente.numeroDocumento,
+    },
+    pago: {
+      estado: pedido.pago.estado,
+      transaccionId: pedido.pago.transaccionId,
+      fecha: pedido.pago.verificadoEn,
+    },
     envio: pedido.envio,
   };
 }
@@ -333,6 +370,7 @@ router.post('/', sesionOpcional, async (req, res) => {
     usuarioId: await usuarioDelPedido(req.usuario, cliente),
     cliente: {
       ...Object.fromEntries(CAMPOS_CLIENTE.map((campo) => [campo, cliente[campo].trim()])),
+      numeroDocumento: normalizarDocumento(cliente.numeroDocumento),
       notas: typeof cliente.notas === 'string' ? cliente.notas.trim() : '',
     },
     usuario: req.usuario ? { id: req.usuario.id, nombre: req.usuario.nombre, email: req.usuario.email } : null,

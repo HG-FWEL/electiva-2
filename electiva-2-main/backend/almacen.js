@@ -205,7 +205,7 @@ async function registrarInicioSesion(id) {
 // --- Pedidos ------------------------------------------------------------
 
 const SELECT_PEDIDO = `
-  id, referencia, fecha_pedido, updated_at, estado, facturacion_snapshot, subtotal, costo_envio, monto_total,
+  id, referencia, fecha_pedido, updated_at, estado, usuario_id, facturacion_snapshot, subtotal, costo_envio, monto_total,
   detalles_pedido(id, cantidad, precio_unitario, nombre_producto,
     variantes_producto(productos(sku, imagenes_producto(url_imagen, es_portada)))),
   pagos(id, estado_pago, transaccion_id, fecha_pago)`;
@@ -241,6 +241,7 @@ function aPedido(fila) {
   return {
     referencia: fila.referencia,
     fecha: fila.fecha_pedido,
+    clienteId: fila.usuario_id != null ? String(fila.usuario_id) : null,
     cliente: snapshot.cliente ?? {},
     usuario: snapshot.usuario ?? null,
     metodoEnvio: snapshot.metodoEnvio,
