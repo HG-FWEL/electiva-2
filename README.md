@@ -34,7 +34,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, 
 - **Detalle de producto** con selector de cantidad y visor **3D** (rotar, acercar y alejar) para los productos que tienen modelo.
 - **Carrito** sincronizado con el catálogo: si un precio o el stock cambian, el carrito se actualiza y avisa.
 - **Checkout** por secciones (envío, método de envío y pago) con validación por campo.
-- **Correos a clientes** por Gmail: confirmación cuando se aprueba el pago y aviso cuando el pedido se marca como enviado.
+- **Correos a clientes** por Brevo o Gmail: confirmación cuando se aprueba el pago y aviso cuando el pedido se marca como enviado.
 - **Pago con Wompi**: el backend calcula el total desde su propio catálogo, firma el pago y **verifica la transacción con Wompi** antes de darla por pagada. Al aprobarse, descuenta el stock.
 - **Registro e inicio de sesión** en el backend: contraseñas cifradas con **bcrypt** y sesiones con **JWT**.
 - **Mis pedidos**: cada cliente ve sus compras (también las que hizo como invitado con el mismo correo) y en qué estado va cada una: pago en verificación, preparando, enviado o pago rechazado. Se abre desde el nombre del usuario en la barra superior.
@@ -61,7 +61,7 @@ Tienda en línea de tecnología y telefonía desarrollada con **React + Vite**, 
 | Autenticación | [bcryptjs](https://github.com/dcodeIO/bcrypt.js), [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) |
 | Subida de imágenes | [Multer](https://github.com/expressjs/multer) |
 | Pagos | [Wompi](https://docs.wompi.co/) (widget de checkout) |
-| Correos | [Nodemailer](https://nodemailer.com/) con Gmail |
+| Correos | [Brevo](https://www.brevo.com/) (API por HTTPS) o [Nodemailer](https://nodemailer.com/) con Gmail |
 
 ## 📂 Estructura del repositorio
 
@@ -205,12 +205,15 @@ Los archivos `.env` **no se suben al repositorio** (contienen claves). Usa las p
 |----------|-------------|
 | `PORT` | Puerto del backend (por defecto `4000`). |
 | `WOMPI_INTEGRITY_KEY` | Secreto de integridad de Wompi, para firmar los pagos. |
+| `WOMPI_PRIVATE_KEY` | Llave privada de Wompi (`prv_test_…`). Sirve para revisar pagos que el widget no devolvió (PSE, Nequi, Bancolombia). Sin ella esos pagos quedan pendientes. |
 | `WOMPI_API_URL` | Opcional. Por defecto el sandbox (`https://sandbox.wompi.co/v1`). |
 | `JWT_SECRET` | Clave para firmar las sesiones (mínimo 32 caracteres). **Sin ella el backend no arranca.** |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta de administrador que se crea en el primer arranque. |
 | `SUPABASE_URL` | Dirección del proyecto de Supabase. |
 | `SUPABASE_SECRET_KEY` | Llave secreta (`sb_secret_…`). Salta las reglas de seguridad de la base de datos: **solo va en el `.env` del backend**. |
 | `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Opcionales. Cuenta de Gmail y su [contraseña de aplicación](https://myaccount.google.com/apppasswords) para enviar los correos a clientes. Sin ellas la tienda funciona igual, pero no envía correos. |
+| `BREVO_API_KEY` | Opcional. Llave de [Brevo](https://www.brevo.com/) para enviar los correos por HTTPS. Si está, se usa en vez de Gmail. **Necesaria en Render** (ver [Correos a clientes](#-correos-a-clientes)). |
+| `CORREO_REMITENTE` | Opcional. Correo que aparece como remitente con Brevo; si no está, se usa `GMAIL_USER`. |
 
 ## 📜 Scripts disponibles
 
@@ -276,7 +279,7 @@ En modo pruebas (llaves `pub_test_…`) no se cobra dinero real. Usa la tarjeta 
 
 ## 📧 Correos a clientes
 
-La tienda envía correos por Gmail (`backend/correo.js`) a la dirección que el cliente escribe en el checkout:
+La tienda envía correos (`backend/correo.js`) a la dirección que el cliente escribe en el checkout:
 
 | Cuándo | Correo |
 |--------|--------|
@@ -284,8 +287,16 @@ La tienda envía correos por Gmail (`backend/correo.js`) a la dirección que el 
 | El administrador marca el pedido como **enviado** | Aviso de que el pedido va en camino |
 
 - Cada correo se envía **una sola vez**: volver a verificar un pago o marcarlo otra vez como enviado no lo repite.
-- Se envían en segundo plano: si Gmail falla, el pago y el panel siguen funcionando y el error queda en la consola del backend.
-- Para activarlos se necesita una **contraseña de aplicación** de Google (no la contraseña normal):
+- Se envían en segundo plano: si el envío falla, el pago y el panel siguen funcionando y el error queda en la consola del backend.
+- Hay dos formas de enviarlos; si `BREVO_API_KEY` está, se usa Brevo:
+
+**Brevo (necesario en Render).** El plan gratuito de Render bloquea las conexiones SMTP, así que con Gmail el envío termina en `Connection timeout`. Brevo envía por HTTPS y es gratis hasta 300 correos al día:
+  1. Crea una cuenta en [brevo.com](https://www.brevo.com/).
+  2. En **Senders, Domains & Dedicated IPs → Senders**, agrega el correo de la tienda como remitente y confírmalo desde el correo que te llega.
+  3. En **SMTP & API → API Keys**, crea una llave (empieza por `xkeysib-`).
+  4. En Render (`movimarket-backend` → **Environment**) agrega `BREVO_API_KEY` con esa llave. El remitente es `GMAIL_USER` o, si prefieres otro, `CORREO_REMITENTE`.
+
+**Gmail (para el computador).** Se necesita una **contraseña de aplicación** de Google (no la contraseña normal):
   1. En [myaccount.google.com](https://myaccount.google.com) → **Seguridad**, activa la **Verificación en dos pasos**.
   2. Entra a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), crea una con el nombre `MovilMarket` y copia las 16 letras.
   3. Ponlas en `backend/.env` como `GMAIL_APP_PASSWORD` (sin espacios), junto con `GMAIL_USER`.

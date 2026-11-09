@@ -1,17 +1,31 @@
-// Correos a los clientes por Gmail: confirmación de pedido y pedido enviado.
-// Se envían en segundo plano: si Gmail falla, el pago o el panel siguen
+// Correos a los clientes: confirmación de pedido y pedido enviado.
+// Se envían en segundo plano: si el envío falla, el pago o el panel siguen
 // funcionando y el error solo queda en la consola.
+//
+// Dos formas de enviar (se usa la primera que esté configurada):
+//   1. Brevo (BREVO_API_KEY): por HTTPS. Es la que sirve en Render, cuyo plan
+//      gratuito bloquea las conexiones SMTP y por eso Gmail da "Connection timeout".
+//   2. Gmail (GMAIL_USER + GMAIL_APP_PASSWORD): por SMTP, para el computador.
 const nodemailer = require('nodemailer');
 
-const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
-const activo = Boolean(GMAIL_USER && GMAIL_APP_PASSWORD);
+const { GMAIL_USER, GMAIL_APP_PASSWORD, BREVO_API_KEY } = process.env;
+const BREVO_API_URL = process.env.BREVO_API_URL || 'https://api.brevo.com/v3/smtp/email';
+// Dirección que ven los clientes como remitente (en Brevo debe estar verificada)
+const REMITENTE = process.env.CORREO_REMITENTE || GMAIL_USER;
+
+const modo = BREVO_API_KEY && REMITENTE ? 'brevo' : GMAIL_USER && GMAIL_APP_PASSWORD ? 'gmail' : null;
+const activo = modo !== null;
+if (BREVO_API_KEY && !REMITENTE) {
+  console.warn('Aviso: hay BREVO_API_KEY pero falta CORREO_REMITENTE (o GMAIL_USER) para saber desde qué correo enviar.');
+}
 if (!activo) {
-  console.warn('Aviso: sin GMAIL_USER/GMAIL_APP_PASSWORD en .env los correos a clientes están desactivados.');
+  console.warn('Aviso: sin BREVO_API_KEY ni GMAIL_USER/GMAIL_APP_PASSWORD en .env los correos a clientes están desactivados.');
 }
 
-const transporte = activo
-  ? nodemailer.createTransport({ service: 'gmail', auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } })
-  : null;
+const transporte =
+  modo === 'gmail'
+    ? nodemailer.createTransport({ service: 'gmail', auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD } })
+    : null;
 
 const NOMBRES_ENVIO = { estandar: 'Estándar (gratis)', express: 'Express' };
 
@@ -116,13 +130,33 @@ function correoEnviado(pedido) {
   return { asunto: `Tu pedido ${pedido.referencia} va en camino`, html, texto };
 }
 
-async function enviar(para, { asunto, html, texto }) {
+async function enviarPorBrevo(para, { asunto, html, texto }) {
+  const respuesta = await fetch(BREVO_API_URL, {
+    method: 'POST',
+    headers: { 'api-key': BREVO_API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({
+      sender: { name: 'MóvilMarket', email: REMITENTE },
+      to: [{ email: para }],
+      subject: asunto,
+      htmlContent: html,
+      textContent: texto,
+    }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!respuesta.ok) {
+    const detalle = await respuesta.json().catch(() => null);
+    throw new Error(`Brevo respondió ${respuesta.status}: ${detalle?.message ?? 'sin detalle'}`);
+  }
+}
+
+async function enviar(para, correo) {
+  if (modo === 'brevo') return enviarPorBrevo(para, correo);
   await transporte.sendMail({
-    from: `"MóvilMarket" <${GMAIL_USER}>`,
+    from: `"MóvilMarket" <${REMITENTE}>`,
     to: para,
-    subject: asunto,
-    text: texto,
-    html,
+    subject: correo.asunto,
+    text: correo.texto,
+    html: correo.html,
   });
 }
 
